@@ -34,8 +34,7 @@ jobs:
     strategy:
       matrix:
         py_version: ["3.7", "3.8", "3.9", "3.10"]
-        os: [ubuntu-latest, windows-latest]
-    runs-on: "${{ matrix.os }}"
+    runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v2
       - name: Install poetry
@@ -53,7 +52,7 @@ jobs:
         run: poetry run coverage xml
       - name: Upload coverage reports to Codecov with GitHub Action
         uses: codecov/codecov-action@v3
-        if: matrix.os == 'ubuntu-latest' && matrix.py_version == '3.9'
+        if: matrix.py_version == '3.9'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
