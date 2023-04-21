@@ -52,6 +52,20 @@ web.run_app(app)
 
 ```
 
+Also, you can nest routers with prefixes,
+
+```python
+api_router = Router()
+
+memes_router = Router()
+
+main_router = Router()
+
+main_router.add_routes(api_router, prefix="/api")
+main_router.add_routes(memes_router, prefix="/memes")
+```
+
+
 ## Default dependencies
 
 By default this library provides only two injectables. `web.Request` and `web.Application`.
