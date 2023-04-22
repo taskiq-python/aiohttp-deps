@@ -70,7 +70,10 @@ class Header:
         except pydantic.ValidationError as err:
             errors = err.errors()
             for error in errors:
-                error["loc"] = (f"header:{header_name}",)
+                error["loc"] = (
+                    "header",
+                    header_name,
+                ) + error["loc"]
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},
                 text=json.dumps(errors),
@@ -119,7 +122,7 @@ class Json:
         except pydantic.ValidationError as err:
             errors = err.errors()
             for error in errors:
-                error["loc"] = ("body",)
+                error["loc"] = ("body",) + error["loc"]
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},
                 text=json.dumps(errors),
@@ -189,7 +192,57 @@ class Query:
         except pydantic.ValidationError as err:
             errors = err.errors()
             for error in errors:
-                error["loc"] = (f"querystring:{param_name}",)
+                error["loc"] = (
+                    "query",
+                    param_name,
+                ) + error["loc"]
+            raise web.HTTPBadRequest(
+                headers={"Content-Type": "application/json"},
+                text=json.dumps(errors),
+            )
+
+
+class Form:
+    """
+    Get and validate form data.
+
+    This dependency grabs form data and validates
+    it against given schema.
+
+    You should provide schema with typehints.
+    """
+
+    async def __call__(
+        self,
+        param_info: ParamInfo = Depends(),
+        request: web.Request = Depends(),
+    ) -> Any:
+        """
+        Performs actual logic, described above.
+
+        :param param_info: information about how the dependency
+            was defined with name and type.
+        :param request: current request.
+        :raises HTTPBadRequest: if incorrect data was found.
+        :return: parsed data.
+        """
+        form_data = await request.post()
+        definition = None
+        if (  # noqa: WPS337
+            param_info.definition
+            and param_info.definition.annotation != inspect.Parameter.empty
+        ):
+            definition = param_info.definition.annotation
+
+        if definition is None:
+            return form_data
+
+        try:
+            return pydantic.parse_obj_as(definition, form_data)
+        except pydantic.ValidationError as err:
+            errors = err.errors()
+            for error in errors:
+                error["loc"] = ("form",) + error["loc"]
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},
                 text=json.dumps(errors),

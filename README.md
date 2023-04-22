@@ -52,6 +52,20 @@ web.run_app(app)
 
 ```
 
+Also, you can nest routers with prefixes,
+
+```python
+api_router = Router()
+
+memes_router = Router()
+
+main_router = Router()
+
+main_router.add_routes(api_router, prefix="/api")
+main_router.add_routes(memes_router, prefix="/memes")
+```
+
+
 ## Default dependencies
 
 By default this library provides only two injectables. `web.Request` and `web.Application`.
@@ -231,5 +245,36 @@ router = Router()
 class MyView(View):
     async def get(self, app: web.Application = Depends()):
         return web.json_response({"app": str(app)})
+
+```
+
+
+## Forms
+
+Now you can easiy get and validate form data from your request.
+To make the magic happen, please add `arbitrary_types_allowed` to the config of your model.
+
+
+```python
+from pydantic import BaseModel
+from aiohttp_deps import Router, Depends, Form
+from aiohttp import web
+
+router = Router()
+
+
+class MyForm(BaseModel):
+    id: int
+    file: web.FileField
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+@router.post("/")
+async def handler(my_form: MyForm = Depends(Form())):
+    with open("my_file", "wb") as f:
+        f.write(my_form.file.file.read())
+    return web.json_response({"id": my_form.id})
 
 ```
