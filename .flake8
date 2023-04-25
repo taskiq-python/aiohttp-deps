@@ -94,6 +94,8 @@ ignore =
   WPS612,
   ; Found complex default value
   WPS404,
+  ; Found protected attribute usage
+  WPS437,
 
   ; all init files
   __init__.py:
