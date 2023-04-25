@@ -16,7 +16,11 @@ class Router(web.RouteTableDef):
     New types are introduced in stub file: router.pyi.
     """
 
-    def add_routes(self, router: Iterable[web.RouteDef], prefix: str = "") -> None:
+    def add_routes(
+        self,
+        router: Iterable[web.AbstractRouteDef],
+        prefix: str = "",
+    ) -> None:
         """
         Append another router's routes to this one.
 
