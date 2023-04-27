@@ -26,10 +26,12 @@ class Header:
         *,
         alias: Optional[str] = None,
         multiple: bool = False,
+        description: str = "",
     ):
         self.default = default
         self.alias = alias
         self.multiple = multiple
+        self.description = description
 
     def __call__(  # noqa: C901, WPS210
         self,
@@ -148,10 +150,12 @@ class Query:
         *,
         alias: Optional[str] = None,
         multiple: bool = False,
+        description: str = "",
     ):
         self.default = default
         self.alias = alias
         self.multiple = multiple
+        self.description = description
 
     def __call__(  # noqa: C901, WPS210
         self,
@@ -243,6 +247,46 @@ class Form:
             errors = err.errors()
             for error in errors:
                 error["loc"] = ("form",) + error["loc"]
+            raise web.HTTPBadRequest(
+                headers={"Content-Type": "application/json"},
+                text=json.dumps(errors),
+            )
+
+
+class Path:
+    def __init__(
+        self,
+        default: Any = ...,
+        *,
+        alias: Optional[str] = None,
+        description: str = "",
+    ) -> None:
+        self.default = default
+        self.alias = alias
+        self.description = description
+
+    def __call__(
+        self,
+        param_info: ParamInfo = Depends(),
+        request: web.Request = Depends(),
+    ) -> Any:
+        matched_data = request.match_info.get(param_info.name)
+        definition = None
+        if (  # noqa: WPS337
+            param_info.definition
+            and param_info.definition.annotation != inspect.Parameter.empty
+        ):
+            definition = param_info.definition.annotation
+
+        if definition is None:
+            return matched_data
+
+        try:
+            return pydantic.parse_obj_as(definition, matched_data)
+        except pydantic.ValidationError as err:
+            errors = err.errors()
+            for error in errors:
+                error["loc"] = ("path",) + error["loc"]
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},
                 text=json.dumps(errors),

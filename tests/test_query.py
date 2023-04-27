@@ -109,8 +109,6 @@ async def test_multiple(
     querys.extend({"my_query": "123"})
     querys.extend({"my_query": "321"})
 
-    print(querys.getall("my_query"))
-
     resp = await client.get("/", params=querys)
     assert resp.status == 200
     assert (await resp.json())["query"] == [123, 321]

@@ -109,8 +109,6 @@ async def test_multiple(
     headers.extend({"my_header": "123"})
     headers.extend({"my_header": "321"})
 
-    print(headers.getall("my_header"))
-
     resp = await client.get("/", headers=headers)
     assert resp.status == 200
     assert (await resp.json())["header"] == [123, 321]
