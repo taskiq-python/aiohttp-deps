@@ -9,7 +9,7 @@ from pydantic.utils import deep_update
 from taskiq_dependencies import DependencyGraph
 
 from aiohttp_deps.initializer import InjectableFuncHandler, InjectableViewHandler
-from aiohttp_deps.utils import Header, Json, Path, Query
+from aiohttp_deps.utils import Form, Header, Json, Path, Query
 
 REF_TEMPLATE = "#/components/schemas/{model}"
 SCHEMA_KEY = "openapi_schema"
@@ -64,7 +64,7 @@ def _get_swagger_handler(
 def _is_optional(annotation: Optional[inspect.Parameter]) -> bool:
     # If it's an empty annotation,
     # we guess that the value can be optional.
-    if annotation is None or annotation == annotation.empty:
+    if annotation is None or annotation.annotation == annotation.empty:
         return True
 
     origin = getattr(annotation.annotation, "__origin__", None)
@@ -91,11 +91,14 @@ def _add_route_def(  # noqa: C901
         "responses": {},
         "parameters": [],
     }
-    if route.resource is None:
+    if route.resource is None:  # pragma: no cover
         return
 
     for dependency in graph.ordered_deps:
-        if isinstance(dependency.dependency, Json):
+        if isinstance(dependency.dependency, (Json, Form)):
+            content_type = "application/json"
+            if isinstance(dependency.dependency, Form):
+                content_type = "application/x-www-form-urlencoded"
             if (
                 dependency.signature
                 and dependency.signature.annotation != inspect.Parameter.empty
@@ -105,15 +108,19 @@ def _add_route_def(  # noqa: C901
                     ref_template=REF_TEMPLATE,
                 )
                 openapi_schema["components"]["schemas"].update(
-                    input_schema.pop("definitions"),
+                    input_schema.pop("definitions", {}),
                 )
                 route_info["requestBody"] = {
-                    "content": {"applicaiton/json": {"schema": input_schema}},
+                    "content": {content_type: {"schema": input_schema}},
+                }
+            else:
+                route_info["requestBody"] = {
+                    "content": {content_type: {}},
                 }
         elif isinstance(dependency.dependency, Query):
             route_info["parameters"].append(
                 {
-                    "name": dependency.param_name,
+                    "name": dependency.dependency.alias or dependency.param_name,
                     "in": "query",
                     "description": dependency.dependency.description,
                     "required": not _is_optional(dependency.signature),
@@ -122,7 +129,7 @@ def _add_route_def(  # noqa: C901
         elif isinstance(dependency.dependency, Header):
             route_info["parameters"].append(
                 {
-                    "name": dependency.param_name,
+                    "name": dependency.dependency.alias or dependency.param_name,
                     "in": "header",
                     "description": dependency.dependency.description,
                     "required": not _is_optional(dependency.signature),
@@ -131,7 +138,7 @@ def _add_route_def(  # noqa: C901
         elif isinstance(dependency.dependency, Path):
             route_info["parameters"].append(
                 {
-                    "name": dependency.param_name,
+                    "name": dependency.dependency.alias or dependency.param_name,
                     "in": "path",
                     "description": dependency.dependency.description,
                     "required": not _is_optional(dependency.signature),
@@ -189,7 +196,7 @@ def setup_swagger(  # noqa: C901, WPS211
             "paths": defaultdict(dict),
         }
         for route in app.router.routes():
-            if route.resource is None:
+            if route.resource is None:  # pragma: no cover
                 continue
             if hide_heads and route.method == "HEAD":
                 continue
@@ -207,7 +214,7 @@ def setup_swagger(  # noqa: C901, WPS211
                         route._handler.graph,
                         extra_openapi=extra_openapi,
                     )
-                except Exception as exc:
+                except Exception as exc:  # pragma: no cover
                     logger.warn(
                         "Cannot add route info: %s",
                         exc,
@@ -232,7 +239,7 @@ def setup_swagger(  # noqa: C901, WPS211
                             graph,
                             extra_openapi=extra_openapi,
                         )
-                    except Exception as exc:
+                    except Exception as exc:  # pragma: no cover
                         logger.warn(
                             "Cannot add route info: %s",
                             exc,
