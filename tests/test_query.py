@@ -129,3 +129,20 @@ async def test_untyped(
     resp = await client.get("/", params={"my_query": "123"})
     assert resp.status == 200
     assert (await resp.json())["query"] == "123"
+
+
+@pytest.mark.anyio
+async def test_aliased(
+    my_app: web.Application,
+    aiohttp_client: ClientGenerator,
+):
+    async def handler(my_query=Depends(Query(alias="not_my_query"))):
+        return web.json_response({"query": my_query})
+
+    my_app.router.add_get("/", handler)
+
+    client = await aiohttp_client(my_app)
+
+    resp = await client.get("/", params={"not_my_query": "123"})
+    assert resp.status == 200
+    assert (await resp.json())["query"] == "123"

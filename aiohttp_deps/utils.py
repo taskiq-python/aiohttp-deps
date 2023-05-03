@@ -287,7 +287,7 @@ class Path:
         :raises HTTPBadRequest: if incorrect data was found.
         :return: parsed data.
         """
-        matched_data = request.match_info.get(param_info.name)
+        matched_data = request.match_info.get(self.alias or param_info.name)
         definition = None
         if (
             param_info.definition
