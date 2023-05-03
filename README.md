@@ -209,7 +209,7 @@ def decode_token(meme_id: str = Depends(Header(default="not-a-secret"))) -> str:
 ```
 
 
-# Queries
+## Queries
 
 You can depend on `Query` to get and parse query parameters.
 
@@ -276,5 +276,22 @@ async def handler(my_form: MyForm = Depends(Form())):
     with open("my_file", "wb") as f:
         f.write(my_form.file.file.read())
     return web.json_response({"id": my_form.id})
+
+```
+
+## Path
+
+If you have path variables, you can also inject them in your handler.
+
+```python
+from aiohttp_deps import Router, Path, Depends
+from aiohttp import web
+
+router = Router()
+
+
+@router.get("/view/{var}")
+async def my_handler(var: str = Depends(Path())):
+    return web.json_response({"var": var})
 
 ```
