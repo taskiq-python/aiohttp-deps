@@ -58,7 +58,7 @@ class Header:
             value = request.headers.getone(header_name, default_value)
 
         definition = None
-        if (  # noqa: WPS337
+        if (
             param_info.definition
             and param_info.definition.annotation != inspect.Parameter.empty
         ):
@@ -110,7 +110,7 @@ class Json:
             body = None
 
         definition = None
-        if (  # noqa: WPS337
+        if (
             param_info.definition
             and param_info.definition.annotation != inspect.Parameter.empty
         ):
@@ -182,7 +182,7 @@ class Query:
             value = request.query.getone(param_name, default_value)
 
         definition = None
-        if (  # noqa: WPS337
+        if (
             param_info.definition
             and param_info.definition.annotation != inspect.Parameter.empty
         ):
@@ -232,7 +232,7 @@ class Form:
         """
         form_data = await request.post()
         definition = None
-        if (  # noqa: WPS337
+        if (
             param_info.definition
             and param_info.definition.annotation != inspect.Parameter.empty
         ):
@@ -254,6 +254,14 @@ class Form:
 
 
 class Path:
+    """
+    Get path parameter.
+
+    This class takes a path parameter
+    from request and tries to parse it
+    in target type.
+    """
+
     def __init__(
         self,
         default: Any = ...,
@@ -270,9 +278,18 @@ class Path:
         param_info: ParamInfo = Depends(),
         request: web.Request = Depends(),
     ) -> Any:
+        """
+        Performs actual logic, described above.
+
+        :param param_info: information about how the dependency
+            was defined with name and type.
+        :param request: current request.
+        :raises HTTPBadRequest: if incorrect data was found.
+        :return: parsed data.
+        """
         matched_data = request.match_info.get(param_info.name)
         definition = None
-        if (  # noqa: WPS337
+        if (
             param_info.definition
             and param_info.definition.annotation != inspect.Parameter.empty
         ):
