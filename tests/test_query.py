@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 import pytest
 from aiohttp import web
@@ -98,7 +98,7 @@ async def test_multiple(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
 ):
-    async def handler(my_query: list[int] = Depends(Query(multiple=True))):
+    async def handler(my_query: List[int] = Depends(Query(multiple=True))):
         return web.json_response({"query": my_query})
 
     my_app.router.add_get("/", handler)
