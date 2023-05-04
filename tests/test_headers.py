@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 import pytest
 from aiohttp import web
@@ -98,7 +98,7 @@ async def test_multiple(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
 ):
-    async def handler(my_header: list[int] = Depends(Header(multiple=True))):
+    async def handler(my_header: List[int] = Depends(Header(multiple=True))):
         return web.json_response({"header": my_header})
 
     my_app.router.add_get("/", handler)
@@ -108,8 +108,6 @@ async def test_multiple(
     headers = CIMultiDict()
     headers.extend({"my_header": "123"})
     headers.extend({"my_header": "321"})
-
-    print(headers.getall("my_header"))
 
     resp = await client.get("/", headers=headers)
     assert resp.status == 200
