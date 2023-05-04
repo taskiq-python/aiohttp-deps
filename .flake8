@@ -96,15 +96,8 @@ ignore =
   WPS404,
   ; Found protected attribute usage
   WPS437,
-
-  ; all init files
-  __init__.py:
-  ; ignore not used imports
-  F401,
-  ; ignore import with wildcard
-  F403,
-  ; Found wrong metadata variable
-  WPS410,
+  ; Found multiline conditions
+  WPS337,
 
 per-file-ignores =
   ; all tests
@@ -119,6 +112,15 @@ per-file-ignores =
   WPS111,
   ; Found complex default value
   WPS404,
+
+  ; all init files
+  __init__.py:
+  ; ignore not used imports
+  F401,
+  ; ignore import with wildcard
+  F403,
+  ; Found wrong metadata variable
+  WPS410,
 
 exclude =
   ./.git,

@@ -81,7 +81,7 @@ async def test_deep_nesting(
 
     client = await aiohttp_client(my_app)
     url = "/api/" + "/".join([str(i) for i in range(20)][::-1]) + "/a"
-    print(url)
+
     response = await client.get(url)
     assert response.status == 200
     assert await response.json() == {"a": "b"}
