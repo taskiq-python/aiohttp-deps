@@ -1,5 +1,4 @@
 import inspect
-import sys
 from typing import Optional, Union
 
 import pytest
@@ -43,9 +42,19 @@ def test_unioned_optional():
     assert not _is_optional(param)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="requires python3.10 or higher")
+@pytest.mark.skip("We doesn't support 3.10 annotation style yet.")
 def test_new_type_style():
-    def tfunc(param: int | None):
+    def tfunc(param: "int | None"):
+        """Nothing."""
+
+    param = inspect.signature(tfunc).parameters["param"]
+
+    assert _is_optional(param)
+
+
+@pytest.mark.skip("We doesn't support string annotations yet.")
+def test_string_annotation():
+    def tfunc(param: "int | None"):
         """Nothing."""
 
     param = inspect.signature(tfunc).parameters["param"]
