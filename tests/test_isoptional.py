@@ -33,7 +33,7 @@ def test_unioned_optional():
     assert _is_optional(param)
 
 
-def test_unioned_optional():
+def test_unioned():
     def tfunc(param: Union[int, str]):
         """Nothing."""
 

@@ -65,6 +65,25 @@ main_router.add_routes(api_router, prefix="/api")
 main_router.add_routes(memes_router, prefix="/memes")
 ```
 
+## Swagger
+
+If you use dependencies in you handlers, we can easily generate swagger for you.
+We have some limitations:
+1. We don't support string type annotation for detecting required parameters in openapi. Like `a: "Optional[int]"`.
+2. We don't have support for 3.10 style Option annotations. E.G. `int | None`
+
+We will try to fix these limitations later.
+
+To enable swagger, just add it to your startup.
+
+```python
+from aiohttp_deps import init, setup_swagger
+
+app = web.Application()
+
+app.on_startup.extend([init, setup_swagger()])
+```
+
 
 ## Default dependencies
 
