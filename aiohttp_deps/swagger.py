@@ -277,7 +277,6 @@ def extra_openapi(additional_schema: Dict[str, Any]) -> Callable[..., Any]:
 
     def decorator(func: Any) -> Any:
         func.__extra_openapi__ = additional_schema
-
         return func
 
     return decorator
