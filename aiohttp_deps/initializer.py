@@ -44,6 +44,7 @@ class InjectableFuncHandler:
             {
                 web.Request: request,
                 web.Application: request.app,
+                **request.app.get("dependency_overrides", {}),
             },
         ) as resolver:
             return await self.original_handler(**(await resolver.resolve_kwargs()))

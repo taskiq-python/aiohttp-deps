@@ -53,3 +53,25 @@ async def test_views_unknown_method(
     client = await aiohttp_client(my_app)
     resp = await client.delete("/")
     assert resp.status == 405
+
+
+@pytest.mark.anyio
+async def test_dependency_override(
+    my_app: web.Application,
+    aiohttp_client: ClientGenerator,
+):
+    def original_dep() -> int:
+        return 1
+
+    class MyView(View):
+        async def get(self, num: int = Depends(original_dep)):
+            """Nothing."""
+            return web.json_response({"request": num})
+
+    my_app.router.add_view("/", MyView)
+    my_app["dependency_overrides"] = {original_dep: 2}
+
+    client = await aiohttp_client(my_app)
+    resp = await client.get("/")
+    assert resp.status == 200
+    assert (await resp.json())["request"] == 2
