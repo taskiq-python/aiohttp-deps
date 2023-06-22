@@ -314,3 +314,35 @@ async def my_handler(var: str = Depends(Path())):
     return web.json_response({"var": var})
 
 ```
+
+
+## Overridiing dependencies
+
+Sometimes for tests you don't want to calculate actual functions
+and you want to pass another functions instead.
+
+To do so, you can add "dependency_overrides" key to the aplication.
+It's a dict that is passed as additional context to dependency resolvers.
+
+Here's an example.
+
+```python
+def original_dep() -> int:
+    return 1
+
+class MyView(View):
+    async def get(self, num: int = Depends(original_dep)):
+        """Nothing."""
+        return web.json_response({"request": num})
+```
+
+Imagine you have a handler that depends on some function,
+but instead of `1` you want to have `2` in your tests.
+
+To do it, jsut add `dependency_overrides` somewhere,
+where you create your application. And make sure that keys
+of that dict are actual function that are being replaced.
+
+```python
+    my_app["dependency_overrides"] = {original_dep: 2}
+```
