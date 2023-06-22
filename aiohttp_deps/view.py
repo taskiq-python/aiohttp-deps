@@ -43,6 +43,7 @@ class View(web.View):
             {
                 web.Request: self.request,
                 web.Application: self.request.app,
+                **self.request.app.get("dependency_overrides", {}),
             },
         ) as ctx:
             return await method(**(await ctx.resolve_kwargs()))  # type: ignore
