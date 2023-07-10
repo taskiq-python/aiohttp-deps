@@ -1,17 +1,16 @@
+import pydantic
 import pytest
 from aiohttp import web
-from pydantic import BaseModel
 
 from aiohttp_deps import Depends, Form
 from tests.conftest import ClientGenerator
 
 
-class InputSchema(BaseModel):
+class InputSchema(pydantic.BaseModel):
     id: int
     file: web.FileField
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
 
 @pytest.mark.anyio

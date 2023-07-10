@@ -68,14 +68,15 @@ class Header:
             return value
 
         try:
-            return pydantic.parse_obj_as(definition, value)
+            return pydantic.TypeAdapter(definition).validate_python(value)
         except pydantic.ValidationError as err:
-            errors = err.errors()
+            errors = err.errors(include_url=False)
             for error in errors:
                 error["loc"] = (
                     "header",
                     header_name,
                 ) + error["loc"]
+                error.pop("input", None)  # type: ignore
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},
                 text=json.dumps(errors),
@@ -120,11 +121,12 @@ class Json:
             return body
 
         try:
-            return pydantic.parse_obj_as(definition, body)
+            return pydantic.TypeAdapter(definition).validate_python(body)
         except pydantic.ValidationError as err:
-            errors = err.errors()
+            errors = err.errors(include_url=False)
             for error in errors:
                 error["loc"] = ("body",) + error["loc"]
+                error.pop("input", None)  # type: ignore
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},
                 text=json.dumps(errors),
@@ -192,14 +194,15 @@ class Query:
             return value
 
         try:
-            return pydantic.parse_obj_as(definition, value)
+            return pydantic.TypeAdapter(definition).validate_python(value)
         except pydantic.ValidationError as err:
-            errors = err.errors()
+            errors = err.errors(include_url=False)
             for error in errors:
                 error["loc"] = (
                     "query",
                     param_name,
                 ) + error["loc"]
+                error.pop("input", None)  # type: ignore
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},
                 text=json.dumps(errors),
@@ -242,10 +245,11 @@ class Form:
             return form_data
 
         try:
-            return pydantic.parse_obj_as(definition, form_data)
+            return pydantic.TypeAdapter(definition).validate_python(form_data)
         except pydantic.ValidationError as err:
-            errors = err.errors()
+            errors = err.errors(include_url=False)
             for error in errors:
+                error.pop("input", None)  # type: ignore
                 error["loc"] = ("form",) + error["loc"]
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},
@@ -299,10 +303,11 @@ class Path:
             return matched_data
 
         try:
-            return pydantic.parse_obj_as(definition, matched_data)
+            return pydantic.TypeAdapter(definition).validate_python(matched_data)
         except pydantic.ValidationError as err:
-            errors = err.errors()
+            errors = err.errors(include_url=False)
             for error in errors:
+                error.pop("input", None)  # type: ignore
                 error["loc"] = ("path",) + error["loc"]
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},

@@ -27,7 +27,7 @@ homepage = "https://github.com/taskiq-python/aiohttp-deps"
 python = "^3.8.1"
 aiohttp = "^3"
 taskiq-dependencies = "^1"
-pydantic = "^1"
+pydantic = "^2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.1.2"

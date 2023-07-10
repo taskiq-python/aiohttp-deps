@@ -3,8 +3,8 @@ from collections import defaultdict
 from logging import getLogger
 from typing import Any, Awaitable, Callable, Dict, Optional, Union
 
+import pydantic
 from aiohttp import web
-from pydantic import schema_of
 from pydantic.utils import deep_update
 from taskiq_dependencies import DependencyGraph
 
@@ -103,8 +103,9 @@ def _add_route_def(  # noqa: C901
                 dependency.signature
                 and dependency.signature.annotation != inspect.Parameter.empty
             ):
-                input_schema = schema_of(
+                input_schema = pydantic.TypeAdapter(
                     dependency.signature.annotation,
+                ).json_schema(
                     ref_template=REF_TEMPLATE,
                 )
                 openapi_schema["components"]["schemas"].update(
