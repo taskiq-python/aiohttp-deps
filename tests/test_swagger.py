@@ -16,6 +16,7 @@ from aiohttp_deps import (
     extra_openapi,
     setup_swagger,
 )
+from aiohttp_deps.swagger import openapi_response
 from tests.conftest import ClientGenerator
 
 
@@ -470,3 +471,94 @@ async def test_extra_openapi_views(
 
     handler_info = resp_json["paths"]["/a"]["post"]
     assert handler_info["post_info"] == "wow"
+
+
+@pytest.mark.anyio
+async def test_merge_headers(
+    my_app: web.Application,
+    aiohttp_client: ClientGenerator,
+) -> None:
+    OPENAPI_URL = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+
+    async def my_handler(
+        my_var: Optional[str] = Depends(Header(alias="head")),
+        my_var2: Optional[str] = Depends(Header(alias="head")),
+        my_var3: str = Depends(Header(alias="head")),
+    ):
+        """Nothing."""
+
+    my_app.router.add_get("/a", my_handler)
+
+    client = await aiohttp_client(my_app)
+    resp = await client.get(OPENAPI_URL)
+    assert resp.status == 200
+    resp_json = await resp.json()
+    params = resp_json["paths"]["/a"]["get"]["parameters"]
+    print(params)
+    assert len(params) == 1
+    assert params[0]["name"] == "Head"
+    assert params[0]["required"]
+    assert not params[0]["allowEmptyValue"]
+
+
+@pytest.mark.anyio
+async def test_custom_responses(
+    my_app: web.Application,
+    aiohttp_client: ClientGenerator,
+) -> None:
+    OPENAPI_URL = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+
+    class RespModel(BaseModel):
+        name: str
+        age: int
+
+    class UnauthModel(BaseModel):
+        why: str
+
+    @openapi_response(200, RespModel)
+    @openapi_response(401, UnauthModel)
+    async def my_handler():
+        """Nothing."""
+
+    my_app.router.add_get("/a", my_handler)
+
+    client = await aiohttp_client(my_app)
+    resp = await client.get(OPENAPI_URL)
+    resp_json = await resp.json()
+    route_info = resp_json["paths"]["/a"]["get"]
+    assert "401" in route_info["responses"]
+    assert "200" in route_info["responses"]
+    assert "schema" in route_info["responses"]["200"]["content"]["application/json"]
+    assert "schema" in route_info["responses"]["401"]["content"]["application/json"]
+
+
+@pytest.mark.anyio
+async def test_custom_responses_multi_content_type(
+    my_app: web.Application,
+    aiohttp_client: ClientGenerator,
+) -> None:
+    OPENAPI_URL = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+
+    class First(BaseModel):
+        name: str
+
+    class Second(BaseModel):
+        age: int
+
+    @openapi_response(200, First, content_type="application/json")
+    @openapi_response(200, Second, content_type="application/xml")
+    async def my_handler():
+        """Nothing."""
+
+    my_app.router.add_get("/a", my_handler)
+
+    client = await aiohttp_client(my_app)
+    resp = await client.get(OPENAPI_URL)
+    resp_json = await resp.json()
+    route_info = resp_json["paths"]["/a"]["get"]
+    assert "200" in route_info["responses"]
+    assert "application/json" in route_info["responses"]["200"]["content"]
+    assert "application/xml" in route_info["responses"]["200"]["content"]

@@ -98,8 +98,8 @@ def _add_route_def(  # noqa: C901, WPS210
             params[(data["name"], data["in"])] = data
             return
         element["required"] = element.get("required") or data.get("required")
-        element["allowEmptyValue"] = element.get("allowEmptyValue") and data.get(
-            "allowEmptyValue",
+        element["allowEmptyValue"] = bool(element.get("allowEmptyValue")) and bool(
+            data.get("allowEmptyValue"),
         )
         params[(data["name"], data["in"])] = element
 
@@ -317,10 +317,12 @@ def openapi_response(
         openapi = getattr(func, "__extra_openapi__", {})
         adapter: "pydantic.TypeAdapter[Any]" = pydantic.TypeAdapter(model)
         responses = openapi.get("responses", {})
-        responses[status] = {
-            "description": description,
-            "content": {content_type: {"schema": adapter.json_schema()}},
-        }
+        status_response = responses.get(status, {})
+        if not status_response:
+            status_response["description"] = description
+        status_response["content"] = status_response.get("content", {})
+        status_response["content"][content_type] = {"schema": adapter.json_schema()}
+        responses[status] = status_response
         openapi["responses"] = responses
         func.__extra_openapi__ = openapi  # type: ignore
         return func
