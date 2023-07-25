@@ -1,6 +1,6 @@
 import inspect
 import json
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import pydantic
 from aiohttp import web
@@ -32,8 +32,10 @@ class Header:
         self.alias = alias
         self.multiple = multiple
         self.description = description
+        self.type_initialized = False
+        self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
 
-    def __call__(  # noqa: C901, WPS210
+    def __call__(  # noqa: C901
         self,
         param_info: ParamInfo = Depends(),
         request: web.Request = Depends(),
@@ -52,23 +54,26 @@ class Header:
         if self.default is not ...:
             default_value = self.default
 
+        if not self.type_initialized:
+            if (
+                param_info.definition
+                and param_info.definition.annotation != inspect.Parameter.empty
+            ):
+                self.type_cache = pydantic.TypeAdapter(param_info.definition.annotation)
+            else:
+                self.type_cache = None
+            self.type_initialized = True
+
         if self.multiple:
             value = request.headers.getall(header_name, default_value)
         else:
             value = request.headers.getone(header_name, default_value)
 
-        definition = None
-        if (
-            param_info.definition
-            and param_info.definition.annotation != inspect.Parameter.empty
-        ):
-            definition = param_info.definition.annotation
-
-        if definition is None:
+        if self.type_cache is None:
             return value
 
         try:
-            return pydantic.TypeAdapter(definition).validate_python(value)
+            return self.type_cache.validate_python(value)
         except pydantic.ValidationError as err:
             errors = err.errors(include_url=False)
             for error in errors:
@@ -91,6 +96,10 @@ class Json:
     and then converts it to type from your typehints.
     """
 
+    def __init__(self) -> None:
+        self.type_initialized = False
+        self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
+
     async def __call__(  # noqa: C901
         self,
         param_info: ParamInfo = Depends(),
@@ -110,18 +119,21 @@ class Json:
         except ValueError:
             body = None
 
-        definition = None
-        if (
-            param_info.definition
-            and param_info.definition.annotation != inspect.Parameter.empty
-        ):
-            definition = param_info.definition.annotation
+        if not self.type_initialized:
+            if (
+                param_info.definition
+                and param_info.definition.annotation != inspect.Parameter.empty
+            ):
+                self.type_cache = pydantic.TypeAdapter(param_info.definition.annotation)
+            else:
+                self.type_cache = None
+            self.type_initialized = True
 
-        if definition is None:
+        if self.type_cache is None:
             return body
 
         try:
-            return pydantic.TypeAdapter(definition).validate_python(body)
+            return self.type_cache.validate_python(body)
         except pydantic.ValidationError as err:
             errors = err.errors(include_url=False)
             for error in errors:
@@ -158,8 +170,10 @@ class Query:
         self.alias = alias
         self.multiple = multiple
         self.description = description
+        self.type_initialized = False
+        self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
 
-    def __call__(  # noqa: C901, WPS210
+    def __call__(  # noqa: C901
         self,
         param_info: ParamInfo = Depends(),
         request: web.Request = Depends(),
@@ -178,23 +192,26 @@ class Query:
         if self.default is not ...:
             default_value = self.default
 
+        if not self.type_initialized:
+            if (
+                param_info.definition
+                and param_info.definition.annotation != inspect.Parameter.empty
+            ):
+                self.type_cache = pydantic.TypeAdapter(param_info.definition.annotation)
+            else:
+                self.type_cache = None
+            self.type_initialized = True
+
         if self.multiple:
             value = request.query.getall(param_name, default_value)
         else:
             value = request.query.getone(param_name, default_value)
 
-        definition = None
-        if (
-            param_info.definition
-            and param_info.definition.annotation != inspect.Parameter.empty
-        ):
-            definition = param_info.definition.annotation
-
-        if definition is None:
+        if self.type_cache is None:
             return value
 
         try:
-            return pydantic.TypeAdapter(definition).validate_python(value)
+            return self.type_cache.validate_python(value)
         except pydantic.ValidationError as err:
             errors = err.errors(include_url=False)
             for error in errors:
@@ -219,7 +236,11 @@ class Form:
     You should provide schema with typehints.
     """
 
-    async def __call__(
+    def __init__(self) -> None:
+        self.type_initialized = False
+        self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
+
+    async def __call__(  # noqa: C901
         self,
         param_info: ParamInfo = Depends(),
         request: web.Request = Depends(),
@@ -234,18 +255,22 @@ class Form:
         :return: parsed data.
         """
         form_data = await request.post()
-        definition = None
-        if (
-            param_info.definition
-            and param_info.definition.annotation != inspect.Parameter.empty
-        ):
-            definition = param_info.definition.annotation
 
-        if definition is None:
+        if not self.type_initialized:
+            if (
+                param_info.definition
+                and param_info.definition.annotation != inspect.Parameter.empty
+            ):
+                self.type_cache = pydantic.TypeAdapter(param_info.definition.annotation)
+            else:
+                self.type_cache = None
+            self.type_initialized = True
+
+        if self.type_cache is None:
             return form_data
 
         try:
-            return pydantic.TypeAdapter(definition).validate_python(form_data)
+            return self.type_cache.validate_python(form_data)
         except pydantic.ValidationError as err:
             errors = err.errors(include_url=False)
             for error in errors:
@@ -276,8 +301,10 @@ class Path:
         self.default = default
         self.alias = alias
         self.description = description
+        self.type_initialized = False
+        self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
 
-    def __call__(
+    def __call__(  # noqa: C901
         self,
         param_info: ParamInfo = Depends(),
         request: web.Request = Depends(),
@@ -292,18 +319,22 @@ class Path:
         :return: parsed data.
         """
         matched_data = request.match_info.get(self.alias or param_info.name)
-        definition = None
-        if (
-            param_info.definition
-            and param_info.definition.annotation != inspect.Parameter.empty
-        ):
-            definition = param_info.definition.annotation
 
-        if definition is None:
+        if not self.type_initialized:
+            if (
+                param_info.definition
+                and param_info.definition.annotation != inspect.Parameter.empty
+            ):
+                self.type_cache = pydantic.TypeAdapter(param_info.definition.annotation)
+            else:
+                self.type_cache = None
+            self.type_initialized = True
+
+        if self.type_cache is None:
             return matched_data
 
         try:
-            return pydantic.TypeAdapter(definition).validate_python(matched_data)
+            return self.type_cache.validate_python(matched_data)
         except pydantic.ValidationError as err:
             errors = err.errors(include_url=False)
             for error in errors:
