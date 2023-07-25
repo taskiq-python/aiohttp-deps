@@ -69,8 +69,10 @@ main_router.add_routes(memes_router, prefix="/memes")
 
 If you use dependencies in you handlers, we can easily generate swagger for you.
 We have some limitations:
-1. We don't support string type annotation for detecting required parameters in openapi. Like `a: "Optional[int]"`.
-2. We don't have support for 3.10 style Option annotations. E.G. `int | None`
+1. We don't support resolving type aliases if hint is a string.
+    If you define variable like this: `myvar = int | None` and then in handler
+    you'd create annotation like this: `param: "str | myvar"` it will fail.
+    You need to unquote type hint in order to get it work.
 
 We will try to fix these limitations later.
 
@@ -83,6 +85,46 @@ app = web.Application()
 
 app.on_startup.extend([init, setup_swagger()])
 ```
+
+### Responses
+
+You can define schema for responses using dataclasses or
+pydantic models. This would not affect handlers in any way,
+it's only for documentation purposes, if you want to actually
+validate values your handler returns, please write your own wrapper.
+
+```python
+from dataclasses import dataclass
+
+from aiohttp import web
+from pydantic import BaseModel
+
+from aiohttp_deps import Router, openapi_response
+
+router = Router()
+
+
+@dataclass
+class Success:
+    data: str
+
+
+class Unauthorized(BaseModel):
+    why: str
+
+
+@router.get("/")
+@openapi_response(200, Success, content_type="application/xml")
+@openapi_response(200, Success)
+@openapi_response(401, Unauthorized, description="When token is not correct")
+async def handler() -> web.Response:
+    ...
+```
+
+This example illustrates how much you can do with this decorator. You
+can have multiple content-types for a single status, or you can have different
+possble statuses. This function is pretty simple and if you want to make
+your own decorator for your responses, it won't be hard.
 
 
 ## Default dependencies

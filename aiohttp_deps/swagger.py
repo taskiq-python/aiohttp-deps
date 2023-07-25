@@ -1,17 +1,18 @@
 import inspect
 from collections import defaultdict
 from logging import getLogger
-from typing import Any, Awaitable, Callable, Dict, Optional, Union
+from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar, get_type_hints
 
 import pydantic
 from aiohttp import web
-from pydantic.utils import deep_update
+from deepmerge import always_merger
 from taskiq_dependencies import DependencyGraph
 
 from aiohttp_deps.initializer import InjectableFuncHandler, InjectableViewHandler
 from aiohttp_deps.utils import Form, Header, Json, Path, Query
 
-REF_TEMPLATE = "#/components/schemas/{model}"
+_T = TypeVar("_T")  # noqa: WPS111
+
 SCHEMA_KEY = "openapi_schema"
 SWAGGER_HTML_TEMPALTE = """
 <html lang="en">
@@ -67,19 +68,14 @@ def _is_optional(annotation: Optional[inspect.Parameter]) -> bool:
     if annotation is None or annotation.annotation == annotation.empty:
         return True
 
-    origin = getattr(annotation.annotation, "__origin__", None)
-    if origin is None:
-        return False
+    def dummy(_var: annotation.annotation) -> None:  # type: ignore
+        """Dummy function to use for type resolution."""
 
-    if origin == Union:
-        args = getattr(annotation.annotation, "__args__", ())
-        for arg in args:
-            if arg is type(None):  # noqa: E721, WPS516
-                return True
-    return False
+    var = get_type_hints(dummy).get("_var")
+    return var == Optional[var]
 
 
-def _add_route_def(  # noqa: C901
+def _add_route_def(  # noqa: C901, WPS210
     openapi_schema: Dict[str, Any],
     route: web.ResourceRoute,
     method: str,
@@ -94,6 +90,19 @@ def _add_route_def(  # noqa: C901
     if route.resource is None:  # pragma: no cover
         return
 
+    params: Dict[tuple[str, str], Any] = {}
+
+    def _insert_in_params(data: Dict[str, Any]) -> None:
+        element = params.get((data["name"], data["in"]))
+        if element is None:
+            params[(data["name"], data["in"])] = data
+            return
+        element["required"] = element.get("required") or data.get("required")
+        element["allowEmptyValue"] = bool(element.get("allowEmptyValue")) and bool(
+            data.get("allowEmptyValue"),
+        )
+        params[(data["name"], data["in"])] = element
+
     for dependency in graph.ordered_deps:
         if isinstance(dependency.dependency, (Json, Form)):
             content_type = "application/json"
@@ -105,9 +114,7 @@ def _add_route_def(  # noqa: C901
             ):
                 input_schema = pydantic.TypeAdapter(
                     dependency.signature.annotation,
-                ).json_schema(
-                    ref_template=REF_TEMPLATE,
-                )
+                ).json_schema()
                 openapi_schema["components"]["schemas"].update(
                     input_schema.pop("definitions", {}),
                 )
@@ -119,7 +126,7 @@ def _add_route_def(  # noqa: C901
                     "content": {content_type: {}},
                 }
         elif isinstance(dependency.dependency, Query):
-            route_info["parameters"].append(
+            _insert_in_params(
                 {
                     "name": dependency.dependency.alias or dependency.param_name,
                     "in": "query",
@@ -128,16 +135,17 @@ def _add_route_def(  # noqa: C901
                 },
             )
         elif isinstance(dependency.dependency, Header):
-            route_info["parameters"].append(
+            name = dependency.dependency.alias or dependency.param_name
+            _insert_in_params(
                 {
-                    "name": dependency.dependency.alias or dependency.param_name,
+                    "name": name.capitalize(),
                     "in": "header",
                     "description": dependency.dependency.description,
                     "required": not _is_optional(dependency.signature),
                 },
             )
         elif isinstance(dependency.dependency, Path):
-            route_info["parameters"].append(
+            _insert_in_params(
                 {
                     "name": dependency.dependency.alias or dependency.param_name,
                     "in": "path",
@@ -147,8 +155,9 @@ def _add_route_def(  # noqa: C901
                 },
             )
 
+    route_info["parameters"] = list(params.values())
     openapi_schema["paths"][route.resource.canonical].update(
-        {method.lower(): deep_update(route_info, extra_openapi)},
+        {method.lower(): always_merger.merge(route_info, extra_openapi)},
     )
 
 
@@ -265,7 +274,7 @@ def setup_swagger(  # noqa: C901, WPS211
     return event_handler
 
 
-def extra_openapi(additional_schema: Dict[str, Any]) -> Callable[..., Any]:
+def extra_openapi(additional_schema: Dict[str, Any]) -> Callable[[_T], _T]:
     """
     Add extra openapi schema.
 
@@ -276,8 +285,46 @@ def extra_openapi(additional_schema: Dict[str, Any]) -> Callable[..., Any]:
     :return: same function with new attributes.
     """
 
-    def decorator(func: Any) -> Any:
-        func.__extra_openapi__ = additional_schema
+    def decorator(func: _T) -> _T:
+        func.__extra_openapi__ = additional_schema  # type: ignore
+        return func
+
+    return decorator
+
+
+def openapi_response(
+    status: int,
+    model: Any,
+    *,
+    content_type: str = "application/json",
+    description: Optional[str] = None,
+) -> Callable[[_T], _T]:
+    """
+    Add response schema to the endpoint.
+
+    This function takes a status and model,
+    which is going to represent the response.
+
+    :param status: Status of a response.
+    :param model: Response model.
+    :param content_type: Content-type of a response.
+    :param description: Response's description.
+
+    :returns: decorator that modifies your function.
+    """
+
+    def decorator(func: _T) -> _T:
+        openapi = getattr(func, "__extra_openapi__", {})
+        adapter: "pydantic.TypeAdapter[Any]" = pydantic.TypeAdapter(model)
+        responses = openapi.get("responses", {})
+        status_response = responses.get(status, {})
+        if not status_response:
+            status_response["description"] = description
+        status_response["content"] = status_response.get("content", {})
+        status_response["content"][content_type] = {"schema": adapter.json_schema()}
+        responses[status] = status_response
+        openapi["responses"] = responses
+        func.__extra_openapi__ = openapi  # type: ignore
         return func
 
     return decorator
