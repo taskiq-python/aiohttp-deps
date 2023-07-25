@@ -269,12 +269,12 @@ async def test_query_aliased(
         ),
         (
             Header(),
-            {"name": "my_var", "required": True, "in": "header", "description": ""},
+            {"name": "My_var", "required": True, "in": "header", "description": ""},
         ),
         (
             Header(description="my header"),
             {
-                "name": "my_var",
+                "name": "My_var",
                 "required": True,
                 "in": "header",
                 "description": "my header",
@@ -282,7 +282,7 @@ async def test_query_aliased(
         ),
         (
             Header(alias="a"),
-            {"name": "a", "required": True, "in": "header", "description": ""},
+            {"name": "A", "required": True, "in": "header", "description": ""},
         ),
         (
             Path(),
