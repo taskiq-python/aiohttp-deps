@@ -18,16 +18,16 @@ async def test_json_dependency(
     aiohttp_client: ClientGenerator,
 ):
     async def handler(my_body: InputSchema = Depends(Json())):
-        return web.json_response({"body": my_body.dict()})
+        return web.json_response({"body": my_body.model_dump()})
 
     my_app.router.add_get("/", handler)
 
     test_obj = InputSchema(name="meme")
 
     client = await aiohttp_client(my_app)
-    resp = await client.get("/", json=test_obj.dict())
+    resp = await client.get("/", json=test_obj.model_dump())
     assert resp.status == 200
-    assert (await resp.json())["body"] == test_obj.dict()
+    assert (await resp.json())["body"] == test_obj.model_dump()
 
 
 @pytest.mark.anyio
@@ -67,7 +67,7 @@ async def test_optional_body(
     aiohttp_client: ClientGenerator,
 ):
     async def handler(my_body: Optional[InputSchema] = Depends(Json())):
-        return web.json_response({"body": my_body.dict() if my_body else None})
+        return web.json_response({"body": my_body.model_dump() if my_body else None})
 
     my_app.router.add_get("/", handler)
 
@@ -78,6 +78,6 @@ async def test_optional_body(
 
     data = InputSchema(name="memelover")
 
-    resp = await client.get("/", json=data.dict())
+    resp = await client.get("/", json=data.model_dump())
     assert resp.status == 200
-    assert (await resp.json())["body"] == data.dict()
+    assert (await resp.json())["body"] == data.model_dump()

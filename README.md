@@ -154,7 +154,7 @@ class UserInfo(BaseModel):
 
 @router.post("/users")
 async def new_data(user: UserInfo = Depends(Json())):
-    return web.json_response({"user": user.dict()})
+    return web.json_response({"user": user.model_dump()})
 
 ```
 
@@ -168,7 +168,7 @@ If you want to make this data optional, just mark it as optional.
 async def new_data(user: Optional[UserInfo] = Depends(Json())):
     if user is None:
         return web.json_response({"user": None})
-    return web.json_response({"user": user.dict()})
+    return web.json_response({"user": user.model_dump()})
 
 ```
 
@@ -275,19 +275,18 @@ To make the magic happen, please add `arbitrary_types_allowed` to the config of 
 
 
 ```python
-from pydantic import BaseModel
+import pydantic
 from aiohttp_deps import Router, Depends, Form
 from aiohttp import web
 
 router = Router()
 
 
-class MyForm(BaseModel):
+class MyForm(pydantic.BaseModel):
     id: int
     file: web.FileField
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
 
 @router.post("/")

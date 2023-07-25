@@ -115,8 +115,7 @@ async def test_json_success(
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
-    ref = handler_info["requestBody"]["content"]["application/json"]["schema"]["$ref"]
-    schema = get_schema_by_ref(resp_json, ref)
+    schema = handler_info["requestBody"]["content"]["application/json"]["schema"]
     assert schema["title"] == "Meme"
     assert "a" in schema["properties"]
     assert "b" in schema["properties"]
@@ -385,10 +384,9 @@ async def test_form_success(
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
-    schema_ref = handler_info["requestBody"]["content"][
+    schema = handler_info["requestBody"]["content"][
         "application/x-www-form-urlencoded"
-    ]["schema"]["$ref"]
-    schema = get_schema_by_ref(resp_json, schema_ref)
+    ]["schema"]
     assert schema["title"] == "MyForm"
     assert "a" in schema["properties"]
     assert "b" in schema["properties"]
