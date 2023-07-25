@@ -3,7 +3,7 @@ name = "aiohttp-deps"
 description = "Dependency injection for AioHTTP"
 authors = ["Taskiq team <taskiq@no-reply.com>"]
 maintainers = ["Taskiq team <taskiq@no-reply.com>"]
-version = "0.2.1"
+version = "0.3.0"
 readme = "README.md"
 license = "LICENSE"
 classifiers = [
@@ -27,7 +27,8 @@ homepage = "https://github.com/taskiq-python/aiohttp-deps"
 python = "^3.8.1"
 aiohttp = "^3"
 taskiq-dependencies = "^1"
-pydantic = "^1"
+pydantic = "^2"
+deepmerge = "^1.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.1.2"
