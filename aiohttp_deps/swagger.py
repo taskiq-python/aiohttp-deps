@@ -1,11 +1,11 @@
 import inspect
 from collections import defaultdict
 from logging import getLogger
-from typing import Any, Awaitable, Callable, Dict, Optional, Union
+from typing import Any, Awaitable, Callable, Dict, Optional, get_type_hints
 
 import pydantic
 from aiohttp import web
-from pydantic.utils import deep_update
+from deepmerge import always_merger
 from taskiq_dependencies import DependencyGraph
 
 from aiohttp_deps.initializer import InjectableFuncHandler, InjectableViewHandler
@@ -67,16 +67,11 @@ def _is_optional(annotation: Optional[inspect.Parameter]) -> bool:
     if annotation is None or annotation.annotation == annotation.empty:
         return True
 
-    origin = getattr(annotation.annotation, "__origin__", None)
-    if origin is None:
-        return False
+    def dummy(_var: annotation.annotation) -> None:  # type: ignore
+        """Dummy function to use for type resolution."""
 
-    if origin == Union:
-        args = getattr(annotation.annotation, "__args__", ())
-        for arg in args:
-            if arg is type(None):  # noqa: E721, WPS516
-                return True
-    return False
+    var = get_type_hints(dummy).get("_var")
+    return var == Optional[var]
 
 
 def _add_route_def(  # noqa: C901
@@ -148,7 +143,7 @@ def _add_route_def(  # noqa: C901
             )
 
     openapi_schema["paths"][route.resource.canonical].update(
-        {method.lower(): deep_update(route_info, extra_openapi)},
+        {method.lower(): always_merger.merge(route_info, extra_openapi)},
     )
 
 

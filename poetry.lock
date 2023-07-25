@@ -481,6 +481,17 @@ files = [
 ]
 
 [[package]]
+name = "deepmerge"
+version = "1.1.0"
+description = "a toolset to deeply merge python dictionaries."
+optional = false
+python-versions = "*"
+files = [
+    {file = "deepmerge-1.1.0-py3-none-any.whl", hash = "sha256:59e6ef80b77dc52af3882a1ea78da22bcfc91ae9cdabc0c80729049fe295ff8b"},
+    {file = "deepmerge-1.1.0.tar.gz", hash = "sha256:4c27a0db5de285e1a7ceac7dbc1531deaa556b627dea4900c8244581ecdfea2d"},
+]
+
+[[package]]
 name = "distlib"
 version = "0.3.6"
 description = "Distribution utilities"
@@ -1935,4 +1946,4 @@ tokenize-rt = ">=2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.1"
-content-hash = "972711e7da7274330cf58fd3c8e4fe4c9c729bb420247066536159a4acdb3c7b"
+content-hash = "1938fbd185f1496ce60ff451b211d3dbda0097f5fc1d675ac27a6ebe605f80f6"

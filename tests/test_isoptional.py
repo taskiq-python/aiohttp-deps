@@ -1,8 +1,6 @@
 import inspect
 from typing import Optional, Union
 
-import pytest
-
 from aiohttp_deps.swagger import _is_optional
 
 
@@ -42,7 +40,7 @@ def test_unioned():
     assert not _is_optional(param)
 
 
-@pytest.mark.skip("We doesn't support 3.10 annotation style yet.")
+# @pytest.mark.skip("We doesn't support 3.10 annotation style yet.")
 def test_new_type_style():
     def tfunc(param: "int | None"):
         """Nothing."""
@@ -52,7 +50,6 @@ def test_new_type_style():
     assert _is_optional(param)
 
 
-@pytest.mark.skip("We doesn't support string annotations yet.")
 def test_string_annotation():
     def tfunc(param: "int | None"):
         """Nothing."""
