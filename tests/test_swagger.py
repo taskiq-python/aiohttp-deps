@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Generic, Optional, TypeVar
 
 import pytest
 from aiohttp import web
@@ -18,6 +18,21 @@ from aiohttp_deps import (
 )
 from aiohttp_deps.swagger import openapi_response
 from tests.conftest import ClientGenerator
+
+
+def follow_ref(ref: str, data: dict[str, Any]) -> dict[str, Any]:
+    """Function for following openapi references."""
+    components = deque(ref.split("/"))
+    current_model = None
+    while components:
+        component = components.popleft()
+        if component.strip() == "#":
+            current_model = data
+            continue
+        current_model = current_model.get(component)
+        if current_model is None:
+            return {}
+    return current_model
 
 
 def get_schema_by_ref(full_schema: Dict[str, Any], ref: str):
@@ -141,19 +156,26 @@ async def test_json_untyped(
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
-    print(handler_info)
     assert handler_info["requestBody"]["content"]["application/json"] == {}
 
 
 @pytest.mark.anyio
-async def test_json_untyped(
+async def test_json_generic(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
 ):
     OPENAPI_URL = "/my_api_def.json"
     my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
 
-    async def my_handler(body=Depends(Json())):
+    T = TypeVar("T")
+
+    class First(BaseModel):
+        name: str
+
+    class Second(BaseModel, Generic[T]):
+        data: T
+
+    async def my_handler(body: Second[First] = Depends(Json())):
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
@@ -163,7 +185,10 @@ async def test_json_untyped(
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
-    assert {} == handler_info["requestBody"]["content"]["application/json"]
+    schema = handler_info["requestBody"]["content"]["application/json"]["schema"]
+    first_ref = schema["properties"]["data"]["$ref"]
+    first_obj = follow_ref(first_ref, resp_json)
+    assert "name" in first_obj["properties"]
 
 
 @pytest.mark.anyio
@@ -438,7 +463,6 @@ async def test_extra_openapi_func(
     resp_json = await resp.json()
 
     handler_info = resp_json["paths"]["/a"]["get"]
-    print(handler_info)
     assert handler_info["responses"] == {"200": {}}
 
 
@@ -495,7 +519,6 @@ async def test_merge_headers(
     assert resp.status == 200
     resp_json = await resp.json()
     params = resp_json["paths"]["/a"]["get"]["parameters"]
-    print(params)
     assert len(params) == 1
     assert params[0]["name"] == "Head"
     assert params[0]["required"]
@@ -562,3 +585,34 @@ async def test_custom_responses_multi_content_type(
     assert "200" in route_info["responses"]
     assert "application/json" in route_info["responses"]["200"]["content"]
     assert "application/xml" in route_info["responses"]["200"]["content"]
+
+
+@pytest.mark.anyio
+async def test_custom_responses_generics(
+    my_app: web.Application,
+    aiohttp_client: ClientGenerator,
+) -> None:
+    OPENAPI_URL = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+
+    T = TypeVar("T")
+
+    class First(BaseModel):
+        name: str
+
+    class Second(BaseModel, Generic[T]):
+        data: T
+
+    @openapi_response(200, Second[First])
+    async def my_handler():
+        """Nothing."""
+
+    my_app.router.add_get("/a", my_handler)
+    client = await aiohttp_client(my_app)
+    response = await client.get(OPENAPI_URL)
+    resp_json = await response.json()
+    first_ref = resp_json["paths"]["/a"]["get"]["responses"]["200"]["content"][
+        "application/json"
+    ]["schema"]["properties"]["data"]["$ref"]
+    first_obj = follow_ref(first_ref, resp_json)
+    assert "name" in first_obj["properties"]

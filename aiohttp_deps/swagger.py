@@ -13,6 +13,7 @@ from aiohttp_deps.utils import Form, Header, Json, Path, Query
 
 _T = TypeVar("_T")  # noqa: WPS111
 
+REF_TEMPLATE = "#/components/schemas/{model}"
 SCHEMA_KEY = "openapi_schema"
 SWAGGER_HTML_TEMPALTE = """
 <html lang="en">
@@ -75,12 +76,13 @@ def _is_optional(annotation: Optional[inspect.Parameter]) -> bool:
     return var == Optional[var]
 
 
-def _add_route_def(  # noqa: C901, WPS210
+def _add_route_def(  # noqa: C901, WPS210, WPS211
     openapi_schema: Dict[str, Any],
     route: web.ResourceRoute,
     method: str,
     graph: DependencyGraph,
     extra_openapi: Dict[str, Any],
+    extra_openapi_schemas: Dict[str, Any],
 ) -> None:
     route_info: Dict[str, Any] = {
         "description": inspect.getdoc(graph.target),
@@ -89,6 +91,9 @@ def _add_route_def(  # noqa: C901, WPS210
     }
     if route.resource is None:  # pragma: no cover
         return
+
+    if extra_openapi_schemas:
+        openapi_schema["components"]["schemas"].update(extra_openapi_schemas)
 
     params: Dict[tuple[str, str], Any] = {}
 
@@ -114,9 +119,9 @@ def _add_route_def(  # noqa: C901, WPS210
             ):
                 input_schema = pydantic.TypeAdapter(
                     dependency.signature.annotation,
-                ).json_schema()
+                ).json_schema(ref_template=REF_TEMPLATE)
                 openapi_schema["components"]["schemas"].update(
-                    input_schema.pop("definitions", {}),
+                    input_schema.pop("$defs", {}),
                 )
                 route_info["requestBody"] = {
                     "content": {content_type: {"schema": input_schema}},
@@ -216,6 +221,11 @@ def setup_swagger(  # noqa: C901, WPS211
                     "__extra_openapi__",
                     {},
                 )
+                extra_schemas = getattr(
+                    route._handler.original_handler,
+                    "__extra_openapi_schemas__",
+                    {},
+                )
                 try:
                     _add_route_def(
                         openapi_schema,
@@ -223,6 +233,7 @@ def setup_swagger(  # noqa: C901, WPS211
                         route.method,
                         route._handler.graph,
                         extra_openapi=extra_openapi,
+                        extra_openapi_schemas=extra_schemas,
                     )
                 except Exception as exc:  # pragma: no cover
                     logger.warn(
@@ -234,11 +245,13 @@ def setup_swagger(  # noqa: C901, WPS211
             elif isinstance(route._handler, InjectableViewHandler):
                 for key, graph in route._handler.graph_map.items():
                     extra_openapi = getattr(
-                        getattr(
-                            route._handler.original_handler,
-                            key,
-                        ),
+                        getattr(route._handler.original_handler, key),
                         "__extra_openapi__",
+                        {},
+                    )
+                    extra_schemas = getattr(
+                        getattr(route._handler.original_handler, key),
+                        "__extra_openapi_schemas__",
                         {},
                     )
                     try:
@@ -248,6 +261,7 @@ def setup_swagger(  # noqa: C901, WPS211
                             key,
                             graph,
                             extra_openapi=extra_openapi,
+                            extra_openapi_schemas=extra_schemas,
                         )
                     except Exception as exc:  # pragma: no cover
                         logger.warn(
@@ -315,16 +329,20 @@ def openapi_response(
 
     def decorator(func: _T) -> _T:
         openapi = getattr(func, "__extra_openapi__", {})
+        openapi_schemas = getattr(func, "__extra_openapi_schemas__", {})
         adapter: "pydantic.TypeAdapter[Any]" = pydantic.TypeAdapter(model)
         responses = openapi.get("responses", {})
         status_response = responses.get(status, {})
         if not status_response:
             status_response["description"] = description
         status_response["content"] = status_response.get("content", {})
-        status_response["content"][content_type] = {"schema": adapter.json_schema()}
+        response_schema = adapter.json_schema(ref_template=REF_TEMPLATE)
+        openapi_schemas.update(response_schema.pop("$defs", {}))
+        status_response["content"][content_type] = {"schema": response_schema}
         responses[status] = status_response
         openapi["responses"] = responses
         func.__extra_openapi__ = openapi  # type: ignore
+        func.__extra_openapi_schemas__ = openapi_schemas  # type: ignore
         return func
 
     return decorator
