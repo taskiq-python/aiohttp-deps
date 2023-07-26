@@ -122,6 +122,10 @@ per-file-ignores =
   ; Found wrong metadata variable
   WPS410,
 
+  swagger.py:
+  ; Too many local variables
+  WPS210,
+
 exclude =
   ./.git,
   ./venv,
