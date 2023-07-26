@@ -1,7 +1,16 @@
 import inspect
 from collections import defaultdict
 from logging import getLogger
-from typing import Any, Awaitable, Callable, Dict, Optional, TypeVar, get_type_hints
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Optional,
+    Tuple,
+    TypeVar,
+    get_type_hints,
+)
 
 import pydantic
 from aiohttp import web
@@ -95,7 +104,7 @@ def _add_route_def(  # noqa: C901, WPS210, WPS211
     if extra_openapi_schemas:
         openapi_schema["components"]["schemas"].update(extra_openapi_schemas)
 
-    params: Dict[tuple[str, str], Any] = {}
+    params: Dict[Tuple[str, str], Any] = {}
 
     def _insert_in_params(data: Dict[str, Any]) -> None:
         element = params.get((data["name"], data["in"]))
