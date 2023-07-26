@@ -85,6 +85,17 @@ def _is_optional(annotation: Optional[inspect.Parameter]) -> bool:
     return var == Optional[var]
 
 
+def _get_param_schema(annotation: Optional[inspect.Parameter]) -> Dict[str, Any]:
+    if annotation is None or annotation.annotation == annotation.empty:
+        return {}
+
+    def dummy(_var: annotation.annotation) -> None:  # type: ignore
+        """Dummy function to use for type resolution."""
+
+    var = get_type_hints(dummy).get("_var")
+    return pydantic.TypeAdapter(var).json_schema(ref_template=REF_TEMPLATE)
+
+
 def _add_route_def(  # noqa: C901, WPS210, WPS211
     openapi_schema: Dict[str, Any],
     route: web.ResourceRoute,
@@ -140,25 +151,33 @@ def _add_route_def(  # noqa: C901, WPS210, WPS211
                     "content": {content_type: {}},
                 }
         elif isinstance(dependency.dependency, Query):
+            schema = _get_param_schema(dependency.signature)
+            openapi_schema["components"]["schemas"].update(schema.pop("$defs", {}))
             _insert_in_params(
                 {
                     "name": dependency.dependency.alias or dependency.param_name,
                     "in": "query",
                     "description": dependency.dependency.description,
                     "required": not _is_optional(dependency.signature),
+                    "schema": schema,
                 },
             )
         elif isinstance(dependency.dependency, Header):
             name = dependency.dependency.alias or dependency.param_name
+            schema = _get_param_schema(dependency.signature)
+            openapi_schema["components"]["schemas"].update(schema.pop("$defs", {}))
             _insert_in_params(
                 {
                     "name": name.capitalize(),
                     "in": "header",
                     "description": dependency.dependency.description,
                     "required": not _is_optional(dependency.signature),
+                    "schema": schema,
                 },
             )
         elif isinstance(dependency.dependency, Path):
+            schema = _get_param_schema(dependency.signature)
+            openapi_schema["components"]["schemas"].update(schema.pop("$defs", {}))
             _insert_in_params(
                 {
                     "name": dependency.dependency.alias or dependency.param_name,
@@ -166,6 +185,7 @@ def _add_route_def(  # noqa: C901, WPS210, WPS211
                     "description": dependency.dependency.description,
                     "required": not _is_optional(dependency.signature),
                     "allowEmptyValue": _is_optional(dependency.signature),
+                    "schema": schema,
                 },
             )
 
