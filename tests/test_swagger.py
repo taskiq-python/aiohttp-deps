@@ -20,7 +20,7 @@ from aiohttp_deps.swagger import openapi_response
 from tests.conftest import ClientGenerator
 
 
-def follow_ref(ref: str, data: dict[str, Any]) -> dict[str, Any]:
+def follow_ref(ref: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """Function for following openapi references."""
     components = deque(ref.split("/"))
     current_model = None
