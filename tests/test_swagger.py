@@ -397,6 +397,65 @@ async def test_parameters(
 
 
 @pytest.mark.anyio
+@pytest.mark.parametrize(
+    ["dependecy", "param_info"],
+    (
+        (
+            Query(),
+            {
+                "name": "my_var",
+                "required": False,
+                "in": "query",
+                "description": "",
+                "schema": {},
+            },
+        ),
+        (
+            Header(),
+            {
+                "name": "My_var",
+                "required": False,
+                "in": "header",
+                "description": "",
+                "schema": {},
+            },
+        ),
+        (
+            Path(),
+            {
+                "name": "my_var",
+                "required": False,
+                "in": "path",
+                "description": "",
+                "allowEmptyValue": True,
+                "schema": {},
+            },
+        ),
+    ),
+)
+async def test_parameters_untyped(
+    my_app: web.Application,
+    aiohttp_client: ClientGenerator,
+    dependecy: Any,
+    param_info: Dict[str, Any],
+):
+    OPENAPI_URL = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+
+    async def my_handler(my_var=Depends(dependecy)):
+        """Nothing."""
+
+    my_app.router.add_get("/a", my_handler)
+
+    client = await aiohttp_client(my_app)
+    resp = await client.get(OPENAPI_URL)
+    assert resp.status == 200
+    resp_json = await resp.json()
+    handler_info = resp_json["paths"]["/a"]["get"]
+    assert handler_info["parameters"][0] == param_info
+
+
+@pytest.mark.anyio
 async def test_view_success(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
