@@ -38,7 +38,7 @@ async def test_app_dependency(
 
 
 @pytest.mark.anyio
-async def test_dependency_override(
+async def test_values_override(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
 ):
@@ -49,7 +49,30 @@ async def test_dependency_override(
         return web.json_response({"request": num})
 
     my_app.router.add_get("/", handler)
-    my_app["dependency_overrides"] = {original_dep: 2}
+    my_app["values_overrides"] = {original_dep: 2}
+
+    client = await aiohttp_client(my_app)
+    resp = await client.get("/")
+    assert resp.status == 200
+    assert (await resp.json())["request"] == 2
+
+
+@pytest.mark.anyio
+async def test_dependency_override(
+    my_app: web.Application,
+    aiohttp_client: ClientGenerator,
+):
+    def original_dep() -> int:
+        return 1
+
+    def custom_dep() -> int:
+        return 2
+
+    async def handler(num: int = Depends(original_dep)):
+        return web.json_response({"request": num})
+
+    my_app.router.add_get("/", handler)
+    my_app["dependency_overrides"] = {original_dep: custom_dep}
 
     client = await aiohttp_client(my_app)
     resp = await client.get("/")

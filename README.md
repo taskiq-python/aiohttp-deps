@@ -7,7 +7,7 @@
 
 This project was initially created to show the abillities of [taskiq-dependencies](https://github.com/taskiq-python/taskiq-dependencies) project, which is used by [taskiq](https://github.com/taskiq-python/taskiq) to provide you with the best experience of sending distributed tasks.
 
-This project adds [FastAPI](https://github.com/tiangolo/fastapi)-like dependency injection to your [AioHTTP](https://github.com/aio-libs/aiohttp) application.
+This project adds [FastAPI](https://github.com/tiangolo/fastapi)-like dependency injection to your [AioHTTP](https://github.com/aio-libs/aiohttp) application and swagger documentation based on types.
 
 To start using dependency injection, just initialize the injector.
 
@@ -362,8 +362,8 @@ async def my_handler(var: str = Depends(Path())):
 Sometimes for tests you don't want to calculate actual functions
 and you want to pass another functions instead.
 
-To do so, you can add "dependency_overrides" key to the aplication.
-It's a dict that is passed as additional context to dependency resolvers.
+To do so, you can add "dependency_overrides" or "values_overrides" to the aplication's state.
+These values should be dicts.
 
 Here's an example.
 
@@ -385,5 +385,19 @@ where you create your application. And make sure that keys
 of that dict are actual function that are being replaced.
 
 ```python
-    my_app["dependency_overrides"] = {original_dep: 2}
+    my_app["values_overrides"] = {original_dep: 2}
 ```
+
+But `values_overrides` only overrides values. If you want to
+override functions, you have to use `dependency_overrides`. Here's an example:
+
+```python
+def replacing_function() -> int:
+    return 2
+
+
+my_app["dependency_overrides"] = {original_dep: replacing_function}
+```
+
+The cool point about `dependency_overrides`, is that it recalculates graph and
+you can use dependencies in function that replaces the original.
