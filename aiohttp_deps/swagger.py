@@ -93,7 +93,10 @@ def _get_param_schema(annotation: Optional[inspect.Parameter]) -> Dict[str, Any]
         """Dummy function to use for type resolution."""
 
     var = get_type_hints(dummy).get("_var")
-    return pydantic.TypeAdapter(var).json_schema(ref_template=REF_TEMPLATE)
+    return pydantic.TypeAdapter(var).json_schema(
+        ref_template=REF_TEMPLATE,
+        mode="validation",
+    )
 
 
 def _add_route_def(  # noqa: C901, WPS210, WPS211
@@ -139,7 +142,7 @@ def _add_route_def(  # noqa: C901, WPS210, WPS211
             ):
                 input_schema = pydantic.TypeAdapter(
                     dependency.signature.annotation,
-                ).json_schema(ref_template=REF_TEMPLATE)
+                ).json_schema(ref_template=REF_TEMPLATE, mode="validation")
                 openapi_schema["components"]["schemas"].update(
                     input_schema.pop("$defs", {}),
                 )
@@ -365,7 +368,10 @@ def openapi_response(
         if not status_response:
             status_response["description"] = description
         status_response["content"] = status_response.get("content", {})
-        response_schema = adapter.json_schema(ref_template=REF_TEMPLATE)
+        response_schema = adapter.json_schema(
+            ref_template=REF_TEMPLATE,
+            mode="serialization",
+        )
         openapi_schemas.update(response_schema.pop("$defs", {}))
         status_response["content"][content_type] = {"schema": response_schema}
         responses[status] = status_response
