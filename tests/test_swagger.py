@@ -3,7 +3,8 @@ from typing import Any, Dict, Generic, Optional, TypeVar
 
 import pytest
 from aiohttp import web
-from pydantic import BaseModel
+from pydantic import BaseModel, WithJsonSchema
+from typing_extensions import Annotated
 
 from aiohttp_deps import (
     Depends,
@@ -707,3 +708,42 @@ async def test_custom_responses_generics(
     ]["schema"]["properties"]["data"]["$ref"]
     first_obj = follow_ref(first_ref, resp_json)
     assert "name" in first_obj["properties"]
+
+
+@pytest.mark.anyio
+async def test_annotated(
+    my_app: web.Application,
+    aiohttp_client: ClientGenerator,
+) -> None:
+    OPENAPI_URL = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+
+    validation_type = "int"
+    serialization_type = "float"
+
+    MyType = Annotated[
+        str,
+        WithJsonSchema({"type": validation_type}, mode="validation"),
+        WithJsonSchema({"type": serialization_type}, mode="serialization"),
+    ]
+
+    class TestModel(BaseModel):
+        mt: MyType
+
+    @openapi_response(200, TestModel)
+    async def my_handler(param: TestModel = Depends(Json())) -> None:
+        """Nothing."""
+
+    my_app.router.add_get("/a", my_handler)
+    client = await aiohttp_client(my_app)
+    response = await client.get(OPENAPI_URL)
+    resp_json = await response.json()
+    request_schema = resp_json["paths"]["/a"]["get"]
+    oapi_serialization_type = request_schema["responses"]["200"]["content"][
+        "application/json"
+    ]["schema"]["properties"]["mt"]["type"]
+    assert oapi_serialization_type == serialization_type
+    oapi_validation_type = request_schema["requestBody"]["content"]["application/json"][
+        "schema"
+    ]["properties"]["mt"]["type"]
+    assert oapi_validation_type == validation_type
