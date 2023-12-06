@@ -45,7 +45,7 @@ jobs:
       - name: Install deps
         run: poetry install
       - name: Run pytest check
-        run: poetry run pytest -vv -n auto --cov="aiohttp_deps" .
+        run: poetry run pytest -vv --cov="aiohttp_deps" .
       - name: Generate report
         run: poetry run coverage xml
       - name: Upload coverage reports to Codecov with GitHub Action
