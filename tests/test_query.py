@@ -12,8 +12,8 @@ from tests.conftest import ClientGenerator
 async def test_query_dependency(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_query: str = Depends(Query())):
+) -> None:
+    async def handler(my_query: str = Depends(Query())) -> web.Response:
         return web.json_response({"query": my_query})
 
     my_app.router.add_get("/", handler)
@@ -28,8 +28,8 @@ async def test_query_dependency(
 async def test_empty_querys(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_query: str = Depends(Query())):
+) -> None:
+    async def handler(my_query: str = Depends(Query())) -> None:
         """Nothing."""
 
     my_app.router.add_get("/", handler)
@@ -43,8 +43,8 @@ async def test_empty_querys(
 async def test_nullable_querys(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_query: Optional[str] = Depends(Query())):
+) -> None:
+    async def handler(my_query: Optional[str] = Depends(Query())) -> web.Response:
         return web.json_response({"query": my_query})
 
     my_app.router.add_get("/", handler)
@@ -63,8 +63,8 @@ async def test_nullable_querys(
 async def test_parse_types(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_query: int = Depends(Query())):
+) -> None:
+    async def handler(my_query: int = Depends(Query())) -> web.Response:
         return web.json_response({"query": my_query})
 
     my_app.router.add_get("/", handler)
@@ -80,8 +80,8 @@ async def test_parse_types(
 async def test_default_value(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_query: int = Depends(Query(42))):
+) -> None:
+    async def handler(my_query: int = Depends(Query(42))) -> web.Response:
         return web.json_response({"query": my_query})
 
     my_app.router.add_get("/", handler)
@@ -97,8 +97,10 @@ async def test_default_value(
 async def test_multiple(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_query: List[int] = Depends(Query(multiple=True))):
+) -> None:
+    async def handler(
+        my_query: List[int] = Depends(Query(multiple=True)),
+    ) -> web.Response:
         return web.json_response({"query": my_query})
 
     my_app.router.add_get("/", handler)
@@ -118,8 +120,8 @@ async def test_multiple(
 async def test_untyped(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_query=Depends(Query())):
+) -> None:
+    async def handler(my_query=Depends(Query())) -> web.Response:  # noqa: ANN001
         return web.json_response({"query": my_query})
 
     my_app.router.add_get("/", handler)
@@ -135,8 +137,10 @@ async def test_untyped(
 async def test_aliased(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_query=Depends(Query(alias="not_my_query"))):
+) -> None:
+    async def handler(
+        my_query: str = Depends(Query(alias="not_my_query")),
+    ) -> web.Response:
         return web.json_response({"query": my_query})
 
     my_app.router.add_get("/", handler)

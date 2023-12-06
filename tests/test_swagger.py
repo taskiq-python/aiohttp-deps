@@ -36,7 +36,7 @@ def follow_ref(ref: str, data: Dict[str, Any]) -> Dict[str, Any]:
     return current_model
 
 
-def get_schema_by_ref(full_schema: Dict[str, Any], ref: str):
+def get_schema_by_ref(full_schema: Dict[str, Any], ref: str) -> Dict[str, Any] | Any:
     ref_path = deque(ref.split("/"))
     current_schema = full_schema
     while ref_path:
@@ -52,37 +52,37 @@ def get_schema_by_ref(full_schema: Dict[str, Any], ref: str):
 async def test_swagger_ui(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    UI_URL = "/swagger"
-    OPENAPI_URL = "/my_api_def.json"
+) -> None:
+    ui_url = "/swagger"
+    openapi_url = "/my_api_def.json"
     my_app.on_startup.append(
         setup_swagger(
-            schema_url=OPENAPI_URL,
-            swagger_ui_url=UI_URL,
+            schema_url=openapi_url,
+            swagger_ui_url=ui_url,
             enable_ui=True,
         ),
     )
     client = await aiohttp_client(my_app)
-    resp = await client.get(UI_URL)
+    resp = await client.get(ui_url)
     assert resp.status == 200
-    assert OPENAPI_URL in await resp.text()
+    assert openapi_url in await resp.text()
 
 
 @pytest.mark.anyio
 async def test_schema_url(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    OPENAPI_URL = "/my_api_def.json"
+) -> None:
+    openapi_url = "/my_api_def.json"
     my_app.on_startup.append(
         setup_swagger(
-            schema_url=OPENAPI_URL,
+            schema_url=openapi_url,
             title="My app",
             description="My super app",
         ),
     )
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     assert resp_json["info"]["title"] == "My app"
@@ -93,17 +93,17 @@ async def test_schema_url(
 async def test_no_dependencies(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
-    async def my_handler():
+    async def my_handler() -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
@@ -114,21 +114,21 @@ async def test_no_dependencies(
 async def test_json_success(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
     class Meme(BaseModel):
         a: str
         b: str
 
-    async def my_handler(body: Meme = Depends(Json())):
+    async def my_handler(body: Meme = Depends(Json())) -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
@@ -143,17 +143,17 @@ async def test_json_success(
 async def test_json_untyped(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
-    async def my_handler(body=Depends(Json())):
+    async def my_handler(body=Depends(Json())) -> None:  # noqa: ANN001
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
@@ -164,9 +164,9 @@ async def test_json_untyped(
 async def test_json_generic(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
     T = TypeVar("T")
 
@@ -176,13 +176,13 @@ async def test_json_generic(
     class Second(BaseModel, Generic[T]):
         data: T
 
-    async def my_handler(body: Second[First] = Depends(Json())):
+    async def my_handler(body: Second[First] = Depends(Json())) -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
@@ -196,17 +196,17 @@ async def test_json_generic(
 async def test_query(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
-    async def my_handler(my_var: int = Depends(Query(description="desc"))):
+    async def my_handler(my_var: int = Depends(Query(description="desc"))) -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
@@ -224,17 +224,17 @@ async def test_query(
 async def test_query_optional(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
-    async def my_handler(my_var: Optional[int] = Depends(Query())):
+    async def my_handler(my_var: Optional[int] = Depends(Query())) -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
@@ -252,17 +252,17 @@ async def test_query_optional(
 async def test_query_aliased(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
-    async def my_handler(my_var: int = Depends(Query(alias="qqq"))):
+    async def my_handler(my_var: int = Depends(Query(alias="qqq"))) -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
@@ -380,17 +380,17 @@ async def test_parameters(
     aiohttp_client: ClientGenerator,
     dependecy: Any,
     param_info: Dict[str, Any],
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
-    async def my_handler(my_var: int = Depends(dependecy)):
+    async def my_handler(my_var: int = Depends(dependecy)) -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
@@ -439,17 +439,17 @@ async def test_parameters_untyped(
     aiohttp_client: ClientGenerator,
     dependecy: Any,
     param_info: Dict[str, Any],
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
-    async def my_handler(my_var=Depends(dependecy)):
+    async def my_handler(my_var=Depends(dependecy)) -> None:  # noqa: ANN001
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
@@ -460,21 +460,21 @@ async def test_parameters_untyped(
 async def test_view_success(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
     class MyView(View):
-        async def get():
+        async def get() -> None:
             """Get handler."""
 
-        async def post():
+        async def post() -> None:
             """Post handler."""
 
     my_app.router.add_view("/a", MyView)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     assert {"get", "post"} == set(resp_json["paths"]["/a"].keys())
@@ -484,21 +484,21 @@ async def test_view_success(
 async def test_form_success(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
     class MyForm(BaseModel):
         a: str
         b: str
 
-    async def my_handler(my_var: MyForm = Depends(Form())):
+    async def my_handler(my_var: MyForm = Depends(Form())) -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
@@ -515,17 +515,17 @@ async def test_form_success(
 async def test_form_untyped(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
-    async def my_handler(my_var=Depends(Form())):
+    async def my_handler(my_var=Depends(Form())) -> None:  # noqa: ANN001
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
@@ -539,18 +539,18 @@ async def test_form_untyped(
 async def test_extra_openapi_func(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
     @extra_openapi({"responses": {"200": {}}})
-    async def my_handler():
+    async def my_handler() -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
 
@@ -562,23 +562,23 @@ async def test_extra_openapi_func(
 async def test_extra_openapi_views(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
     class MyView(View):
         @extra_openapi({"get_info": "wow"})
-        async def get():
-            """get handler."""
+        async def get() -> None:
+            """Get handler."""
 
         @extra_openapi({"post_info": "wow"})
-        async def post():
-            """post handler."""
+        async def post() -> None:
+            """Post handler."""
 
     my_app.router.add_view("/a", MyView)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
 
@@ -594,20 +594,20 @@ async def test_merge_headers(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
 ) -> None:
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
     async def my_handler(
         my_var: Optional[str] = Depends(Header(alias="head")),
         my_var2: Optional[str] = Depends(Header(alias="head")),
         my_var3: str = Depends(Header(alias="head")),
-    ):
+    ) -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     assert resp.status == 200
     resp_json = await resp.json()
     params = resp_json["paths"]["/a"]["get"]["parameters"]
@@ -622,8 +622,8 @@ async def test_custom_responses(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
 ) -> None:
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
     class RespModel(BaseModel):
         name: str
@@ -634,13 +634,13 @@ async def test_custom_responses(
 
     @openapi_response(200, RespModel)
     @openapi_response(401, UnauthModel)
-    async def my_handler():
+    async def my_handler() -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     resp_json = await resp.json()
     route_info = resp_json["paths"]["/a"]["get"]
     assert "401" in route_info["responses"]
@@ -654,8 +654,8 @@ async def test_custom_responses_multi_content_type(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
 ) -> None:
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
     class First(BaseModel):
         name: str
@@ -665,13 +665,13 @@ async def test_custom_responses_multi_content_type(
 
     @openapi_response(200, First, content_type="application/json")
     @openapi_response(200, Second, content_type="application/xml")
-    async def my_handler():
+    async def my_handler() -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.get(OPENAPI_URL)
+    resp = await client.get(openapi_url)
     resp_json = await resp.json()
     route_info = resp_json["paths"]["/a"]["get"]
     assert "200" in route_info["responses"]
@@ -684,8 +684,8 @@ async def test_custom_responses_generics(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
 ) -> None:
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
     T = TypeVar("T")
 
@@ -696,12 +696,12 @@ async def test_custom_responses_generics(
         data: T
 
     @openapi_response(200, Second[First])
-    async def my_handler():
+    async def my_handler() -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
     client = await aiohttp_client(my_app)
-    response = await client.get(OPENAPI_URL)
+    response = await client.get(openapi_url)
     resp_json = await response.json()
     first_ref = resp_json["paths"]["/a"]["get"]["responses"]["200"]["content"][
         "application/json"
@@ -715,20 +715,20 @@ async def test_annotated(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
 ) -> None:
-    OPENAPI_URL = "/my_api_def.json"
-    my_app.on_startup.append(setup_swagger(schema_url=OPENAPI_URL))
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
     validation_type = "int"
     serialization_type = "float"
 
-    MyType = Annotated[
+    mytype = Annotated[
         str,
         WithJsonSchema({"type": validation_type}, mode="validation"),
         WithJsonSchema({"type": serialization_type}, mode="serialization"),
     ]
 
     class TestModel(BaseModel):
-        mt: MyType
+        mt: mytype
 
     @openapi_response(200, TestModel)
     async def my_handler(param: TestModel = Depends(Json())) -> None:
@@ -736,7 +736,7 @@ async def test_annotated(
 
     my_app.router.add_get("/a", my_handler)
     client = await aiohttp_client(my_app)
-    response = await client.get(OPENAPI_URL)
+    response = await client.get(openapi_url)
     resp_json = await response.json()
     request_schema = resp_json["paths"]["/a"]["get"]
     oapi_serialization_type = request_schema["responses"]["200"]["content"][

@@ -4,6 +4,8 @@ from aiohttp import web
 from aiohttp.web_response import StreamResponse
 from taskiq_dependencies import DependencyGraph
 
+from aiohttp_deps.keys import DEPENDENCY_OVERRIDES_KEY, VALUES_OVERRIDES_KEY
+
 
 class View(web.View):
     """
@@ -39,12 +41,15 @@ class View(web.View):
         )
         if method is None:
             self._raise_allowed_methods()
+        values_overrides = self.request.app.get(VALUES_OVERRIDES_KEY)
+        if values_overrides is None:
+            values_overrides = {}
         async with self._graph_map[self.request.method.lower()].async_ctx(
             {
                 web.Request: self.request,
                 web.Application: self.request.app,
-                **self.request.app.get("values_overrides", {}),
+                **values_overrides,
             },
-            replaced_deps=self.request.app.get("dependency_overrides"),
+            replaced_deps=self.request.app.get(DEPENDENCY_OVERRIDES_KEY),
         ) as ctx:
             return await method(**(await ctx.resolve_kwargs()))  # type: ignore

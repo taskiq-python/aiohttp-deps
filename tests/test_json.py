@@ -16,8 +16,8 @@ class InputSchema(BaseModel):
 async def test_json_dependency(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_body: InputSchema = Depends(Json())):
+) -> None:
+    async def handler(my_body: InputSchema = Depends(Json())) -> web.Response:
         return web.json_response({"body": my_body.model_dump()})
 
     my_app.router.add_get("/", handler)
@@ -34,8 +34,8 @@ async def test_json_dependency(
 async def test_json_untyped(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_body=Depends(Json())):
+) -> None:
+    async def handler(my_body=Depends(Json())) -> web.Response:  # noqa: ANN001
         return web.json_response({"body": my_body})
 
     my_app.router.add_get("/", handler)
@@ -50,8 +50,8 @@ async def test_json_untyped(
 async def test_empty_body(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_body: InputSchema = Depends(Json())):
+) -> None:
+    async def handler(my_body: InputSchema = Depends(Json())) -> None:
         """Nothing."""
 
     my_app.router.add_get("/", handler)
@@ -65,8 +65,8 @@ async def test_empty_body(
 async def test_optional_body(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_body: Optional[InputSchema] = Depends(Json())):
+) -> None:
+    async def handler(my_body: Optional[InputSchema] = Depends(Json())) -> web.Response:
         return web.json_response({"body": my_body.model_dump() if my_body else None})
 
     my_app.router.add_get("/", handler)

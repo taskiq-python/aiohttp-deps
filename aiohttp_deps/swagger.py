@@ -18,12 +18,12 @@ from deepmerge import always_merger
 from taskiq_dependencies import DependencyGraph
 
 from aiohttp_deps.initializer import InjectableFuncHandler, InjectableViewHandler
+from aiohttp_deps.keys import SWAGGER_SCHEMA_KEY
 from aiohttp_deps.utils import Form, Header, Json, Path, Query
 
-_T = TypeVar("_T")  # noqa: WPS111
+_T = TypeVar("_T")
 
 REF_TEMPLATE = "#/components/schemas/{model}"
-SCHEMA_KEY = "openapi_schema"
 SWAGGER_HTML_TEMPALTE = """
 <html lang="en">
 
@@ -52,7 +52,7 @@ SWAGGER_HTML_TEMPALTE = """
 </body>
 </html>
 """
-METHODS_WITH_BODY = {"POST", "PUT", "PATCH"}  # noqa: WPS407
+METHODS_WITH_BODY = {"POST", "PUT", "PATCH"}
 
 logger = getLogger()
 
@@ -60,7 +60,7 @@ logger = getLogger()
 async def _schema_handler(
     request: web.Request,
 ) -> web.Response:
-    return web.json_response(request.app[SCHEMA_KEY])
+    return web.json_response(request.app[SWAGGER_SCHEMA_KEY])
 
 
 def _get_swagger_handler(
@@ -99,7 +99,7 @@ def _get_param_schema(annotation: Optional[inspect.Parameter]) -> Dict[str, Any]
     )
 
 
-def _add_route_def(  # noqa: C901, WPS210, WPS211
+def _add_route_def(  # noqa: C901
     openapi_schema: Dict[str, Any],
     route: web.ResourceRoute,
     method: str,
@@ -198,7 +198,7 @@ def _add_route_def(  # noqa: C901, WPS210, WPS211
     )
 
 
-def setup_swagger(  # noqa: C901, WPS211
+def setup_swagger(  # noqa: C901
     schema_url: str = "/openapi.json",
     swagger_ui_url: str = "/docs",
     enable_ui: bool = True,
@@ -302,7 +302,7 @@ def setup_swagger(  # noqa: C901, WPS211
                             exc_info=True,
                         )
 
-        app[SCHEMA_KEY] = openapi_schema
+        app[SWAGGER_SCHEMA_KEY] = openapi_schema
 
         app.router.add_get(
             schema_url,

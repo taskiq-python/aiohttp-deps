@@ -151,7 +151,7 @@ router = Router()
 
 
 async def get_db_session(app: web.Application = Depends()):
-    async with app["db"] as sess:
+    async with app[web.AppKey("db")] as sess:
         yield sess
 
 
@@ -385,18 +385,22 @@ where you create your application. And make sure that keys
 of that dict are actual function that are being replaced.
 
 ```python
-    my_app["values_overrides"] = {original_dep: 2}
+from aiohttp_deps import VALUES_OVERRIDES_KEY
+
+my_app[VALUES_OVERRIDES_KEY] = {original_dep: 2}
 ```
 
-But `values_overrides` only overrides values. If you want to
+But `values_overrides` only overrides returned values. If you want to
 override functions, you have to use `dependency_overrides`. Here's an example:
 
 ```python
+from aiohttp_deps import DEPENDENCY_OVERRIDES_KEY
+
 def replacing_function() -> int:
     return 2
 
 
-my_app["dependency_overrides"] = {original_dep: replacing_function}
+my_app[DEPENDENCY_OVERRIDES_KEY] = {original_dep: replacing_function}
 ```
 
 The cool point about `dependency_overrides`, is that it recalculates graph and
