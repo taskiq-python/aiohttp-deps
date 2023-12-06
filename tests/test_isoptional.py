@@ -7,8 +7,8 @@ import pytest
 from aiohttp_deps.swagger import _is_optional
 
 
-def test_optional():
-    def tfunc(param: Optional[int]):
+def test_optional() -> None:
+    def tfunc(param: Optional[int]) -> None:
         """Nothing."""
 
     param = inspect.signature(tfunc).parameters["param"]
@@ -16,8 +16,8 @@ def test_optional():
     assert _is_optional(param)
 
 
-def test_untyped():
-    def tfunc(param):
+def test_untyped() -> None:
+    def tfunc(param) -> None:  # noqa: ANN001
         """Nothing."""
 
     param = inspect.signature(tfunc).parameters["param"]
@@ -25,8 +25,8 @@ def test_untyped():
     assert _is_optional(param)
 
 
-def test_unioned_optional():
-    def tfunc(param: Union[int, None]):
+def test_unioned_optional() -> None:
+    def tfunc(param: Union[int, None]) -> None:
         """Nothing."""
 
     param = inspect.signature(tfunc).parameters["param"]
@@ -34,8 +34,8 @@ def test_unioned_optional():
     assert _is_optional(param)
 
 
-def test_unioned():
-    def tfunc(param: Union[int, str]):
+def test_unioned() -> None:
+    def tfunc(param: Union[int, str]) -> None:
         """Nothing."""
 
     param = inspect.signature(tfunc).parameters["param"]
@@ -44,8 +44,8 @@ def test_unioned():
 
 
 @pytest.mark.skipif(sys.version_info < (3, 10), reason="Unsupported syntax")
-def test_new_type_style():
-    def tfunc(param: "int | None"):
+def test_new_type_style() -> None:
+    def tfunc(param: "int | None") -> None:
         """Nothing."""
 
     param = inspect.signature(tfunc).parameters["param"]
@@ -54,8 +54,8 @@ def test_new_type_style():
 
 
 @pytest.mark.skipif(sys.version_info < (3, 10), reason="Unsupported syntax")
-def test_string_annotation():
-    def tfunc(param: "int | None"):
+def test_string_annotation() -> None:
+    def tfunc(param: "int | None") -> None:
         """Nothing."""
 
     param = inspect.signature(tfunc).parameters["param"]

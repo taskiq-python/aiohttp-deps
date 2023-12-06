@@ -27,7 +27,7 @@ class Header:
         alias: Optional[str] = None,
         multiple: bool = False,
         description: str = "",
-    ):
+    ) -> None:
         self.default = default
         self.alias = alias
         self.multiple = multiple
@@ -35,7 +35,7 @@ class Header:
         self.type_initialized = False
         self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
 
-    def __call__(  # noqa: C901
+    def __call__(
         self,
         param_info: ParamInfo = Depends(),
         request: web.Request = Depends(),
@@ -85,7 +85,7 @@ class Header:
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},
                 text=json.dumps(errors),
-            )
+            ) from err
 
 
 class Json:
@@ -100,7 +100,7 @@ class Json:
         self.type_initialized = False
         self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
 
-    async def __call__(  # noqa: C901
+    async def __call__(
         self,
         param_info: ParamInfo = Depends(),
         request: web.Request = Depends(),
@@ -142,7 +142,7 @@ class Json:
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},
                 text=json.dumps(errors),
-            )
+            ) from err
 
 
 class Query:
@@ -165,7 +165,7 @@ class Query:
         alias: Optional[str] = None,
         multiple: bool = False,
         description: str = "",
-    ):
+    ) -> None:
         self.default = default
         self.alias = alias
         self.multiple = multiple
@@ -173,7 +173,7 @@ class Query:
         self.type_initialized = False
         self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
 
-    def __call__(  # noqa: C901
+    def __call__(
         self,
         param_info: ParamInfo = Depends(),
         request: web.Request = Depends(),
@@ -223,7 +223,7 @@ class Query:
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},
                 text=json.dumps(errors),
-            )
+            ) from err
 
 
 class Form:
@@ -240,7 +240,7 @@ class Form:
         self.type_initialized = False
         self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
 
-    async def __call__(  # noqa: C901
+    async def __call__(
         self,
         param_info: ParamInfo = Depends(),
         request: web.Request = Depends(),
@@ -279,7 +279,7 @@ class Form:
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},
                 text=json.dumps(errors),
-            )
+            ) from err
 
 
 class Path:
@@ -304,7 +304,7 @@ class Path:
         self.type_initialized = False
         self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
 
-    def __call__(  # noqa: C901
+    def __call__(
         self,
         param_info: ParamInfo = Depends(),
         request: web.Request = Depends(),
@@ -343,4 +343,4 @@ class Path:
             raise web.HTTPBadRequest(
                 headers={"Content-Type": "application/json"},
                 text=json.dumps(errors),
-            )
+            ) from err

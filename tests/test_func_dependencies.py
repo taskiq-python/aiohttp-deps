@@ -2,6 +2,7 @@ import pytest
 from aiohttp import web
 
 from aiohttp_deps import Depends
+from aiohttp_deps.keys import DEPENDENCY_OVERRIDES_KEY, VALUES_OVERRIDES_KEY
 from tests.conftest import ClientGenerator
 
 
@@ -9,8 +10,8 @@ from tests.conftest import ClientGenerator
 async def test_request_dependency(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(request: web.Request = Depends()):
+) -> None:
+    async def handler(request: web.Request = Depends()) -> web.Response:
         return web.json_response({"request": str(request)})
 
     my_app.router.add_get("/", handler)
@@ -25,8 +26,8 @@ async def test_request_dependency(
 async def test_app_dependency(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(app: web.Application = Depends()):
+) -> None:
+    async def handler(app: web.Application = Depends()) -> web.Response:
         return web.json_response({"request": str(app)})
 
     my_app.router.add_get("/", handler)
@@ -41,15 +42,15 @@ async def test_app_dependency(
 async def test_values_override(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
+) -> None:
     def original_dep() -> int:
         return 1
 
-    async def handler(num: int = Depends(original_dep)):
+    async def handler(num: int = Depends(original_dep)) -> web.Response:
         return web.json_response({"request": num})
 
     my_app.router.add_get("/", handler)
-    my_app["values_overrides"] = {original_dep: 2}
+    my_app[VALUES_OVERRIDES_KEY] = {original_dep: 2}
 
     client = await aiohttp_client(my_app)
     resp = await client.get("/")
@@ -61,18 +62,18 @@ async def test_values_override(
 async def test_dependency_override(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
+) -> None:
     def original_dep() -> int:
         return 1
 
     def custom_dep() -> int:
         return 2
 
-    async def handler(num: int = Depends(original_dep)):
+    async def handler(num: int = Depends(original_dep)) -> web.Response:
         return web.json_response({"request": num})
 
     my_app.router.add_get("/", handler)
-    my_app["dependency_overrides"] = {original_dep: custom_dep}
+    my_app[DEPENDENCY_OVERRIDES_KEY] = {original_dep: custom_dep}
 
     client = await aiohttp_client(my_app)
     resp = await client.get("/")

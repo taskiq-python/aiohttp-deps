@@ -9,15 +9,15 @@ from tests.conftest import ClientGenerator
 async def test_router_add_routes(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
+) -> None:
     api_router = Router()
 
     @api_router.get("/a")
-    async def _():
+    async def _() -> web.Response:
         return web.json_response({"a": "b"})
 
     @api_router.get("/b")
-    async def _():
+    async def _() -> web.Response:
         return web.json_response({"b": "c"})
 
     router = Router()
@@ -39,11 +39,11 @@ async def test_router_add_routes(
 async def test_prefixed_routes(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
+) -> None:
     api_router = Router()
 
     @api_router.get("/a")
-    async def _():
+    async def _() -> web.Response:
         return web.json_response({"a": "b"})
 
     router = Router()
@@ -61,11 +61,11 @@ async def test_prefixed_routes(
 async def test_deep_nesting(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
+) -> None:
     last_router = Router()
 
     @last_router.get("/a")
-    async def _():
+    async def _() -> web.Response:
         return web.json_response({"a": "b"})
 
     # Generate 20 nested routers.
@@ -88,11 +88,11 @@ async def test_deep_nesting(
 
 
 @pytest.mark.anyio
-async def test_prefixed_routes_no_start_slash():
+async def test_prefixed_routes_no_start_slash() -> None:
     api_router = Router()
 
     @api_router.get("/a")
-    async def _():
+    async def _() -> None:
         """Nothing."""
 
     router = Router()
@@ -101,11 +101,11 @@ async def test_prefixed_routes_no_start_slash():
 
 
 @pytest.mark.anyio
-async def test_prefixed_routes_trailing_slash():
+async def test_prefixed_routes_trailing_slash() -> None:
     api_router = Router()
 
     @api_router.get("/a")
-    async def _():
+    async def _() -> None:
         """Nothing."""
 
     router = Router()
