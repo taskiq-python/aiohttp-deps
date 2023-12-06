@@ -1,5 +1,5 @@
 from collections import deque
-from typing import Any, Dict, Generic, Optional, TypeVar
+from typing import Any, Dict, Generic, Optional, TypeVar, Union
 
 import pytest
 from aiohttp import web
@@ -36,7 +36,10 @@ def follow_ref(ref: str, data: Dict[str, Any]) -> Dict[str, Any]:
     return current_model
 
 
-def get_schema_by_ref(full_schema: Dict[str, Any], ref: str) -> Dict[str, Any] | Any:
+def get_schema_by_ref(
+    full_schema: Dict[str, Any],
+    ref: str,
+) -> Union[Dict[str, Any], Any]:
     ref_path = deque(ref.split("/"))
     current_schema = full_schema
     while ref_path:

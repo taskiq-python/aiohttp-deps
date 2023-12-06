@@ -363,7 +363,7 @@ Sometimes for tests you don't want to calculate actual functions
 and you want to pass another functions instead.
 
 To do so, you can add "dependency_overrides" or "values_overrides" to the aplication's state.
-These values should be dicts.
+These values should be dicts. The keys for these values can be found in `aiohttp_deps.keys` module.
 
 Here's an example.
 
