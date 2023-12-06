@@ -9,8 +9,8 @@ from tests.conftest import ClientGenerator
 async def test_path_dependency(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(var: str = Depends(Path())):
+) -> None:
+    async def handler(var: str = Depends(Path())) -> web.Response:
         return web.json_response({"path": var})
 
     my_app.router.add_get("/{var}", handler)
@@ -25,8 +25,8 @@ async def test_path_dependency(
 async def test_path_wrong_type(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(var: int = Depends(Path())):
+) -> None:
+    async def handler(var: int = Depends(Path())) -> web.Response:
         return web.json_response({"path": var})
 
     my_app.router.add_get("/{var}", handler)
@@ -40,8 +40,8 @@ async def test_path_wrong_type(
 async def test_path_untyped(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(var=Depends(Path())):
+) -> None:
+    async def handler(var=Depends(Path())) -> web.Response:  # noqa: ANN001
         return web.json_response({"path": var})
 
     my_app.router.add_get("/{var}", handler)

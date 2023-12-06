@@ -1,13 +1,14 @@
 from typing import Any, Awaitable, Callable, Iterable, Type, Union
 
+import typing_extensions
 from aiohttp import web
 from aiohttp.abc import AbstractView
 
-_Handler = Callable[..., Awaitable[web.StreamResponse]]
+_Handler: typing_extensions.TypeAlias = Callable[..., Awaitable[web.StreamResponse]]
 
-_ViewedHandler = Union[Type[AbstractView], _Handler]
+_ViewedHandler: typing_extensions.TypeAlias = Union[Type[AbstractView], _Handler]
 
-_Deco = Callable[[_ViewedHandler], _ViewedHandler]
+_Deco: typing_extensions.TypeAlias = Callable[[_ViewedHandler], _ViewedHandler]
 
 class Router(web.RouteTableDef):
     def head(self, path: str, **kwargs: Any) -> _Deco: ...
@@ -18,4 +19,8 @@ class Router(web.RouteTableDef):
     def delete(self, path: str, **kwargs: Any) -> _Deco: ...
     def options(self, path: str, **kwargs: Any) -> _Deco: ...
     def view(self, path: str, **kwargs: Any) -> _Deco: ...
-    def add_routes(self, router: Iterable[web.AbstractRouteDef], prefix: str = "") -> None: ...
+    def add_routes(
+        self,
+        router: Iterable[web.AbstractRouteDef],
+        prefix: str = "",
+    ) -> None: ...

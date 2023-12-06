@@ -12,8 +12,8 @@ from tests.conftest import ClientGenerator
 async def test_header_dependency(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_header: str = Depends(Header())):
+) -> None:
+    async def handler(my_header: str = Depends(Header())) -> web.Response:
         return web.json_response({"header": my_header})
 
     my_app.router.add_get("/", handler)
@@ -28,8 +28,8 @@ async def test_header_dependency(
 async def test_empty_headers(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_header: str = Depends(Header())):
+) -> None:
+    async def handler(my_header: str = Depends(Header())) -> None:
         """Nothing."""
 
     my_app.router.add_get("/", handler)
@@ -43,8 +43,8 @@ async def test_empty_headers(
 async def test_nullable_headers(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_header: Optional[str] = Depends(Header())):
+) -> None:
+    async def handler(my_header: Optional[str] = Depends(Header())) -> web.Response:
         return web.json_response({"header": my_header})
 
     my_app.router.add_get("/", handler)
@@ -63,8 +63,8 @@ async def test_nullable_headers(
 async def test_parse_types(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_header: int = Depends(Header())):
+) -> None:
+    async def handler(my_header: int = Depends(Header())) -> web.Response:
         return web.json_response({"header": my_header})
 
     my_app.router.add_get("/", handler)
@@ -80,8 +80,8 @@ async def test_parse_types(
 async def test_default_value(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_header: int = Depends(Header(42))):
+) -> None:
+    async def handler(my_header: int = Depends(Header(42))) -> web.Response:
         return web.json_response({"header": my_header})
 
     my_app.router.add_get("/", handler)
@@ -97,8 +97,10 @@ async def test_default_value(
 async def test_multiple(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_header: List[int] = Depends(Header(multiple=True))):
+) -> None:
+    async def handler(
+        my_header: List[int] = Depends(Header(multiple=True)),
+    ) -> web.Response:
         return web.json_response({"header": my_header})
 
     my_app.router.add_get("/", handler)
@@ -118,8 +120,8 @@ async def test_multiple(
 async def test_untyped(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_header=Depends(Header())):
+) -> None:
+    async def handler(my_header=Depends(Header())) -> web.Response:  # noqa: ANN001
         return web.json_response({"header": my_header})
 
     my_app.router.add_get("/", handler)

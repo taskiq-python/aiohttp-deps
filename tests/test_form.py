@@ -17,8 +17,8 @@ class InputSchema(pydantic.BaseModel):
 async def test_form_dependency(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(my_form: InputSchema = Depends(Form())):
+) -> None:
+    async def handler(my_form: InputSchema = Depends(Form())) -> web.Response:
         return web.Response(body=my_form.file.file.read())
 
     my_app.router.add_post("/", handler)
@@ -37,8 +37,8 @@ async def test_form_dependency(
 async def test_form_empty(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(_: InputSchema = Depends(Form())):
+) -> None:
+    async def handler(_: InputSchema = Depends(Form())) -> None:
         """Nothing."""
 
     my_app.router.add_post("/", handler)
@@ -54,8 +54,8 @@ async def test_form_empty(
 async def test_form_incorrect_data(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(_: InputSchema = Depends(Form())):
+) -> None:
+    async def handler(_: InputSchema = Depends(Form())) -> None:
         """Nothing."""
 
     my_app.router.add_post("/", handler)
@@ -69,8 +69,8 @@ async def test_form_incorrect_data(
 async def test_form_untyped(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-):
-    async def handler(form=Depends(Form())):
+) -> None:
+    async def handler(form=Depends(Form())) -> web.Response:  # noqa: ANN001
         return web.Response(body=form["file"].file.read())
 
     my_app.router.add_post("/", handler)

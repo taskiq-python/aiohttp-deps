@@ -5,6 +5,7 @@ from typing import Awaitable, Callable, Type
 from aiohttp import hdrs, web
 from taskiq_dependencies import DependencyGraph
 
+from aiohttp_deps.keys import DEPENDENCY_OVERRIDES_KEY, VALUES_OVERRIDES_KEY
 from aiohttp_deps.view import View
 
 
@@ -40,13 +41,17 @@ class InjectableFuncHandler:
         :param request: current request.
         :return: response.
         """
+        # Hack for mypy to work
+        values_overrides = request.app.get(VALUES_OVERRIDES_KEY)
+        if values_overrides is None:
+            values_overrides = {}
         async with self.graph.async_ctx(
             {
                 web.Request: request,
                 web.Application: request.app,
-                **request.app.get("values_overrides", {}),
+                **values_overrides,
             },
-            replaced_deps=request.app.get("dependency_overrides"),
+            replaced_deps=request.app.get(DEPENDENCY_OVERRIDES_KEY),
         ) as resolver:
             return await self.original_handler(**(await resolver.resolve_kwargs()))
 
@@ -72,7 +77,7 @@ class InjectableViewHandler:
         allowed_methods = {
             method.lower()
             for method in hdrs.METH_ALL
-            if hasattr(original_route, method.lower())  # noqa: WPS421
+            if hasattr(original_route, method.lower())
         }
         self.graph_map = {
             method: DependencyGraph(getattr(original_route, method))
