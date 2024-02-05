@@ -750,3 +750,33 @@ async def test_annotated(
         "schema"
     ]["properties"]["mt"]["type"]
     assert oapi_validation_type == validation_type
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize(
+    ["method", "option_name"],
+    [("HEAD", "hide_heads"), ("OPTIONS", "hide_options")],
+)
+async def test_method_skips(
+    my_app: web.Application,
+    aiohttp_client: ClientGenerator,
+    method: str,
+    option_name: str,
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(
+        setup_swagger(schema_url=openapi_url, **{option_name: True}),
+    )
+
+    async def my_handler() -> None:
+        """Nothing."""
+        return web.Response()
+
+    my_app.router.add_route(method, "/", my_handler)
+    my_app.router.add_route("GET", "/", my_handler)
+
+    client = await aiohttp_client(my_app)
+    response = await client.get(openapi_url)
+    schema = await response.json()
+    assert "get" in schema["paths"]["/"]
+    assert method.lower() not in schema["paths"]["/"]
