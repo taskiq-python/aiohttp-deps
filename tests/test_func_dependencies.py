@@ -79,3 +79,18 @@ async def test_dependency_override(
     resp = await client.get("/")
     assert resp.status == 200
     assert (await resp.json())["request"] == 2
+
+
+@pytest.mark.anyio
+async def test_ordinary_functions_support(
+    my_app: web.Application,
+    aiohttp_client: ClientGenerator,
+) -> None:
+    async def handler(request: web.Request) -> web.Response:
+        return web.json_response({"request": "ordinary"})
+
+    my_app.router.add_get("/", handler)
+    client = await aiohttp_client(my_app)
+    resp = await client.get("/")
+    assert resp.status == 200
+    assert await resp.json() == {"request": "ordinary"}

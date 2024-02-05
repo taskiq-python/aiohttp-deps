@@ -30,6 +30,15 @@ class InjectableFuncHandler:
     ) -> None:
         self.original_handler = copy.copy(original_route)
         self.graph = DependencyGraph(self.original_handler)
+        signature = inspect.signature(self.original_handler)
+        # This flag means that the function requires one argument and
+        # doesn't depend on any other dependencies.
+        # We assume that such functions should be treated as ordinary
+        # aiohttp handlers and therefore we don't inject any dependencies
+        # and pass request object directly to the handler.
+        self.is_ordinary = False
+        if self.graph.is_empty() and len(signature.parameters) == 1:
+            self.is_ordinary = True
 
     async def __call__(self, request: web.Request) -> web.StreamResponse:
         """
@@ -41,6 +50,8 @@ class InjectableFuncHandler:
         :param request: current request.
         :return: response.
         """
+        if self.is_ordinary:
+            return await self.original_handler(request)
         # Hack for mypy to work
         values_overrides = request.app.get(VALUES_OVERRIDES_KEY)
         if values_overrides is None:
