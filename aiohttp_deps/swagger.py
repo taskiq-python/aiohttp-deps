@@ -247,9 +247,9 @@ def setup_swagger(  # noqa: C901
         for route in app.router.routes():
             if route.resource is None:  # pragma: no cover
                 continue
-            if hide_heads and route.method.lower() == "HEAD":  # pragma: no cover
+            if hide_heads and route.method.upper() == "HEAD":
                 continue
-            if hide_options and route.method.lower() == "OPTIONS":  # pragma: no cover
+            if hide_options and route.method.upper() == "OPTIONS":
                 continue
             if isinstance(route._handler, InjectableFuncHandler):
                 extra_openapi = getattr(
