@@ -203,6 +203,7 @@ def setup_swagger(  # noqa: C901
     swagger_ui_url: str = "/docs",
     enable_ui: bool = True,
     hide_heads: bool = True,
+    hide_options: bool = True,
     title: str = "AioHTTP",
     description: Optional[str] = None,
     version: str = "1.0.0",
@@ -225,13 +226,14 @@ def setup_swagger(  # noqa: C901
     :param swagger_ui_url: URL where swagger ui will be served.
     :param enable_ui: whether you want to enable bundled swagger ui.
     :param hide_heads: hide HEAD requests.
+    :param hide_options: hide OPTIONS requests.
     :param title: Title of an application.
     :param description: description of an application.
     :param version: version of an application.
     :return: startup event handler.
     """
 
-    async def event_handler(app: web.Application) -> None:
+    async def event_handler(app: web.Application) -> None:  # noqa: C901
         openapi_schema = {
             "openapi": "3.0.0",
             "info": {
@@ -245,7 +247,9 @@ def setup_swagger(  # noqa: C901
         for route in app.router.routes():
             if route.resource is None:  # pragma: no cover
                 continue
-            if hide_heads and route.method == "HEAD":
+            if hide_heads and route.method.lower() == "HEAD":  # pragma: no cover
+                continue
+            if hide_options and route.method.lower() == "OPTIONS":  # pragma: no cover
                 continue
             if isinstance(route._handler, InjectableFuncHandler):
                 extra_openapi = getattr(
