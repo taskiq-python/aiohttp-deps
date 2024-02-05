@@ -3,7 +3,7 @@ name = "aiohttp-deps"
 description = "Dependency injection for AioHTTP"
 authors = ["Taskiq team <taskiq@no-reply.com>"]
 maintainers = ["Taskiq team <taskiq@no-reply.com>"]
-version = "1.1.0"
+version = "1.1.1"
 readme = "README.md"
 license = "LICENSE"
 classifiers = [
@@ -47,12 +47,9 @@ ruff = "^0.1.7"
 [tool.mypy]
 strict = true
 ignore_missing_imports = true
-allow_subclassing_any = true
-allow_untyped_calls = true
 pretty = true
 show_error_codes = true
 implicit_reexport = true
-allow_untyped_decorators = true
 warn_return_any = false
 warn_unused_ignores = false
 
