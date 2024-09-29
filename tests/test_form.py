@@ -1,3 +1,5 @@
+from io import BytesIO
+
 import pydantic
 import pytest
 from aiohttp import web
@@ -27,7 +29,7 @@ async def test_form_dependency(
     client = await aiohttp_client(my_app)
     resp = await client.post(
         "/",
-        data={"id": "1", "file": b"bytes"},
+        data={"id": "1", "file": BytesIO(file_data)},
     )
     assert resp.status == 200
     assert await resp.content.read() == file_data
@@ -61,7 +63,7 @@ async def test_form_incorrect_data(
     my_app.router.add_post("/", handler)
 
     client = await aiohttp_client(my_app)
-    resp = await client.post("/", data={"id": "meme", "file": b""})
+    resp = await client.post("/", data={"id": "meme", "file": BytesIO(b"")})
     assert resp.status == 400
 
 
@@ -77,6 +79,6 @@ async def test_form_untyped(
 
     form_data = b"meme"
     client = await aiohttp_client(my_app)
-    resp = await client.post("/", data={"id": "meme", "file": form_data})
+    resp = await client.post("/", data={"id": "meme", "file": BytesIO(form_data)})
     assert resp.status == 200
     assert await resp.content.read() == form_data
