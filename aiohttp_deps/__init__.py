@@ -1,4 +1,5 @@
 """Project was generated using taskiq."""
+
 from taskiq_dependencies import Depends
 
 from aiohttp_deps.initializer import init

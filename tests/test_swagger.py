@@ -533,8 +533,8 @@ async def test_form_untyped(
     resp_json = await resp.json()
     handler_info = resp_json["paths"]["/a"]["get"]
     assert (
-        {}
-        == handler_info["requestBody"]["content"]["application/x-www-form-urlencoded"]
+        handler_info["requestBody"]["content"]["application/x-www-form-urlencoded"]
+        == {}
     )
 
 
