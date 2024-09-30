@@ -100,7 +100,7 @@ def _get_param_schema(annotation: Optional[inspect.Parameter]) -> Dict[str, Any]
     )
 
 
-def _add_route_def(  # noqa: C901
+def _add_route_def(  # noqa: C901, PLR0912
     openapi_schema: Dict[str, Any],
     route: web.ResourceRoute,
     method: str,
