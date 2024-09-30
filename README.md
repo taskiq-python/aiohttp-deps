@@ -357,7 +357,15 @@ async def my_handler(var: str = Depends(Path())):
 ```
 
 
-## Overridiing dependencies
+## ExtraOpenAPI
+
+This dependency is used to add additional swagger fields to the endpoint's swagger
+that is using this dependency. It might be even indirect dependency.
+
+You can check how this thing can be used in our [examples/swagger_auth.py](https://github.com/taskiq-python/aiohttp-deps/tree/master/examples/swagger_auth.py).
+
+
+## Overriding dependencies
 
 Sometimes for tests you don't want to calculate actual functions
 and you want to pass another functions instead.
