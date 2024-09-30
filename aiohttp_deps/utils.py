@@ -1,6 +1,6 @@
 import inspect
 import json
-from typing import Any, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 import pydantic
 from aiohttp import web
@@ -344,3 +344,37 @@ class Path:
                 headers={"Content-Type": "application/json"},
                 text=json.dumps(errors),
             ) from err
+
+
+class ExtraOpenAPI:
+    """
+    Update swagger for the endpoint.
+
+    You can use this dependency to add swagger to an endpoint from
+    a dependency. It's useful when you want to add some extra swagger
+    to the route when some specific dependency is used by it.
+    """
+
+    def __init__(
+        self,
+        extra_openapi: Optional[Dict[str, Any]] = None,
+        swagger_updater: Optional[Callable[[Dict[str, Any]], None]] = None,
+    ) -> None:
+        """
+        Initialize the dependency.
+
+        :param swagger_updater: function that takes final swagger endpoint and
+        updates it.
+        :param extra_swagger: extra swagger to add to the endpoint. This one might
+        override other extra_swagger on the endpoint.
+        """
+        self.updater = swagger_updater
+        self.extra_openapi = extra_openapi
+
+    def __call__(self) -> None:
+        """
+        This method is called when dependency is resolved.
+
+        It's empty, becuase it's used by the swagger function and
+        there is no actual dependency.
+        """

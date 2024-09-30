@@ -6,6 +6,7 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
+    List,
     Optional,
     Tuple,
     TypeVar,
@@ -19,7 +20,7 @@ from taskiq_dependencies import DependencyGraph
 
 from aiohttp_deps.initializer import InjectableFuncHandler, InjectableViewHandler
 from aiohttp_deps.keys import SWAGGER_SCHEMA_KEY
-from aiohttp_deps.utils import Form, Header, Json, Path, Query
+from aiohttp_deps.utils import ExtraOpenAPI, Form, Header, Json, Path, Query
 
 _T = TypeVar("_T")
 
@@ -99,7 +100,7 @@ def _get_param_schema(annotation: Optional[inspect.Parameter]) -> Dict[str, Any]
     )
 
 
-def _add_route_def(  # noqa: C901
+def _add_route_def(  # noqa: C901, PLR0912
     openapi_schema: Dict[str, Any],
     route: web.ResourceRoute,
     method: str,
@@ -119,6 +120,7 @@ def _add_route_def(  # noqa: C901
         openapi_schema["components"]["schemas"].update(extra_openapi_schemas)
 
     params: Dict[Tuple[str, str], Any] = {}
+    updaters: List[Callable[[Dict[str, Any]], None]] = []
 
     def _insert_in_params(data: Dict[str, Any]) -> None:
         element = params.get((data["name"], data["in"]))
@@ -191,8 +193,18 @@ def _add_route_def(  # noqa: C901
                     "schema": schema,
                 },
             )
+        elif isinstance(dependency.dependency, ExtraOpenAPI):
+            if dependency.dependency.updater is not None:
+                updaters.append(dependency.dependency.updater)
+            if dependency.dependency.extra_openapi is not None:
+                extra_openapi = always_merger.merge(
+                    extra_openapi,
+                    dependency.dependency.extra_openapi,
+                )
 
     route_info["parameters"] = list(params.values())
+    for updater in updaters:
+        updater(route_info)
     openapi_schema["paths"][route.resource.canonical].update(
         {method.lower(): always_merger.merge(route_info, extra_openapi)},
     )
@@ -207,6 +219,7 @@ def setup_swagger(  # noqa: C901
     title: str = "AioHTTP",
     description: Optional[str] = None,
     version: str = "1.0.0",
+    extra_openapi: Optional[Dict[str, Any]] = None,
 ) -> Callable[[web.Application], Awaitable[None]]:
     """
     Add swagger documentation.
@@ -230,8 +243,11 @@ def setup_swagger(  # noqa: C901
     :param title: Title of an application.
     :param description: description of an application.
     :param version: version of an application.
+    :param extra_openapi: extra openAPI dict that will be merged with generated schema.
     :return: startup event handler.
     """
+    if extra_openapi is None:
+        extra_openapi = {}
 
     async def event_handler(app: web.Application) -> None:  # noqa: C901
         openapi_schema = {
@@ -252,12 +268,12 @@ def setup_swagger(  # noqa: C901
             if hide_options and route.method.upper() == "OPTIONS":
                 continue
             if isinstance(route._handler, InjectableFuncHandler):
-                extra_openapi = getattr(
+                route_extra_openapi = getattr(
                     route._handler.original_handler,
                     "__extra_openapi__",
                     {},
                 )
-                extra_schemas = getattr(
+                route_extra_schemas = getattr(
                     route._handler.original_handler,
                     "__extra_openapi_schemas__",
                     {},
@@ -268,8 +284,8 @@ def setup_swagger(  # noqa: C901
                         route,  # type: ignore
                         route.method,
                         route._handler.graph,
-                        extra_openapi=extra_openapi,
-                        extra_openapi_schemas=extra_schemas,
+                        extra_openapi=route_extra_openapi,
+                        extra_openapi_schemas=route_extra_schemas,
                     )
                 except Exception as exc:  # pragma: no cover
                     logger.warn(
@@ -280,12 +296,12 @@ def setup_swagger(  # noqa: C901
 
             elif isinstance(route._handler, InjectableViewHandler):
                 for key, graph in route._handler.graph_map.items():
-                    extra_openapi = getattr(
+                    route_extra_openapi = getattr(
                         getattr(route._handler.original_handler, key),
                         "__extra_openapi__",
                         {},
                     )
-                    extra_schemas = getattr(
+                    route_extra_schemas = getattr(
                         getattr(route._handler.original_handler, key),
                         "__extra_openapi_schemas__",
                         {},
@@ -296,8 +312,8 @@ def setup_swagger(  # noqa: C901
                             route,  # type: ignore
                             key,
                             graph,
-                            extra_openapi=extra_openapi,
-                            extra_openapi_schemas=extra_schemas,
+                            extra_openapi=route_extra_openapi,
+                            extra_openapi_schemas=route_extra_schemas,
                         )
                     except Exception as exc:  # pragma: no cover
                         logger.warn(
@@ -306,7 +322,7 @@ def setup_swagger(  # noqa: C901
                             exc_info=True,
                         )
 
-        app[SWAGGER_SCHEMA_KEY] = openapi_schema
+        app[SWAGGER_SCHEMA_KEY] = always_merger.merge(openapi_schema, extra_openapi)
 
         app.router.add_get(
             schema_url,

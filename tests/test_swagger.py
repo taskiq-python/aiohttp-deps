@@ -8,6 +8,7 @@ from typing_extensions import Annotated
 
 from aiohttp_deps import (
     Depends,
+    ExtraOpenAPI,
     Form,
     Header,
     Json,
@@ -780,3 +781,60 @@ async def test_method_skips(
     schema = await response.json()
     assert "get" in schema["paths"]["/"]
     assert method.lower() not in schema["paths"]["/"]
+
+
+@pytest.mark.anyio
+async def test_extra_openapi_dep_func(
+    my_app: web.Application,
+    aiohttp_client: ClientGenerator,
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
+
+    async def dep(
+        _: None = Depends(ExtraOpenAPI(extra_openapi={"responses": {"200": {}}})),
+    ) -> None:
+        """Test dep that adds swagger through a dependency."""
+
+    async def my_handler(_: None = Depends(dep)) -> None:
+        """Nothing."""
+
+    my_app.router.add_get("/a", my_handler)
+
+    client = await aiohttp_client(my_app)
+    resp = await client.get(openapi_url)
+    assert resp.status == 200
+    resp_json = await resp.json()
+
+    handler_info = resp_json["paths"]["/a"]["get"]
+    assert handler_info["responses"] == {"200": {}}
+
+
+@pytest.mark.anyio
+async def test_extra_openapi_dep_updater_func(
+    my_app: web.Application,
+    aiohttp_client: ClientGenerator,
+) -> None:
+    openapi_url = "/my_api_def.json"
+    my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
+
+    def schema_updater(schema: Dict[str, Any]) -> None:
+        schema["responses"] = {"200": {}}
+
+    async def dep(
+        _: None = Depends(ExtraOpenAPI(swagger_updater=schema_updater)),
+    ) -> None:
+        """Test dep that adds swagger through a dependency."""
+
+    async def my_handler(_: None = Depends(dep)) -> None:
+        """Nothing."""
+
+    my_app.router.add_get("/a", my_handler)
+
+    client = await aiohttp_client(my_app)
+    resp = await client.get(openapi_url)
+    assert resp.status == 200
+    resp_json = await resp.json()
+
+    handler_info = resp_json["paths"]["/a"]["get"]
+    assert handler_info["responses"] == {"200": {}}
