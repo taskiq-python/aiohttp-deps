@@ -126,8 +126,8 @@ async def init(app: web.Application) -> None:
     :param app: current application.
     """
     for route in app.router.routes():
-        if inspect.isclass(route._handler):
-            if issubclass(route._handler, View):
-                route._handler = InjectableViewHandler(route._handler)
+        if inspect.isclass(route.handler):
+            if issubclass(route.handler, View):
+                route._handler = InjectableViewHandler(route.handler)
             continue
-        route._handler = InjectableFuncHandler(route._handler)
+        route._handler = InjectableFuncHandler(route.handler)
