@@ -35,6 +35,26 @@ class Header:
         self.type_initialized = False
         self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
 
+    def on_validate_error(
+        self,
+        param_info: ParamInfo,
+        request: web.Request,
+        err: pydantic.ValidationError,
+    ) -> Any:
+        """Method to handle validation errors."""
+        header_name = self.alias or param_info.name
+        errors = err.errors(include_url=False)
+        for error in errors:
+            error["loc"] = (
+                "header",
+                header_name,
+            ) + error["loc"]
+            error.pop("input", None)  # type: ignore
+        raise web.HTTPBadRequest(
+            headers={"Content-Type": "application/json"},
+            text=json.dumps(errors),
+        ) from err
+
     def __call__(
         self,
         param_info: ParamInfo = Depends(),
@@ -75,17 +95,7 @@ class Header:
         try:
             return self.type_cache.validate_python(value)
         except pydantic.ValidationError as err:
-            errors = err.errors(include_url=False)
-            for error in errors:
-                error["loc"] = (
-                    "header",
-                    header_name,
-                ) + error["loc"]
-                error.pop("input", None)  # type: ignore
-            raise web.HTTPBadRequest(
-                headers={"Content-Type": "application/json"},
-                text=json.dumps(errors),
-            ) from err
+            return self.on_validate_error(param_info, request, err)
 
 
 class Json:
@@ -99,6 +109,22 @@ class Json:
     def __init__(self) -> None:
         self.type_initialized = False
         self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
+
+    def on_validate_error(
+        self,
+        param_info: ParamInfo,
+        request: web.Request,
+        err: pydantic.ValidationError,
+    ) -> Any:
+        """Method to handle validation errors."""
+        errors = err.errors(include_url=False)
+        for error in errors:
+            error["loc"] = ("body",) + error["loc"]
+            error.pop("input", None)  # type: ignore
+        raise web.HTTPBadRequest(
+            headers={"Content-Type": "application/json"},
+            text=json.dumps(errors),
+        ) from err
 
     async def __call__(
         self,
@@ -135,14 +161,7 @@ class Json:
         try:
             return self.type_cache.validate_python(body)
         except pydantic.ValidationError as err:
-            errors = err.errors(include_url=False)
-            for error in errors:
-                error["loc"] = ("body",) + error["loc"]
-                error.pop("input", None)  # type: ignore
-            raise web.HTTPBadRequest(
-                headers={"Content-Type": "application/json"},
-                text=json.dumps(errors),
-            ) from err
+            return self.on_validate_error(param_info, request, err)
 
 
 class Query:
@@ -172,6 +191,26 @@ class Query:
         self.description = description
         self.type_initialized = False
         self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
+
+    def on_validate_error(
+        self,
+        param_info: ParamInfo,
+        request: web.Request,
+        err: pydantic.ValidationError,
+    ) -> Any:
+        """Method to handle validation errors."""
+        param_name = self.alias or param_info.name
+        errors = err.errors(include_url=False)
+        for error in errors:
+            error["loc"] = (
+                "query",
+                param_name,
+            ) + error["loc"]
+            error.pop("input", None)  # type: ignore
+        raise web.HTTPBadRequest(
+            headers={"Content-Type": "application/json"},
+            text=json.dumps(errors),
+        ) from err
 
     def __call__(
         self,
@@ -213,17 +252,7 @@ class Query:
         try:
             return self.type_cache.validate_python(value)
         except pydantic.ValidationError as err:
-            errors = err.errors(include_url=False)
-            for error in errors:
-                error["loc"] = (
-                    "query",
-                    param_name,
-                ) + error["loc"]
-                error.pop("input", None)  # type: ignore
-            raise web.HTTPBadRequest(
-                headers={"Content-Type": "application/json"},
-                text=json.dumps(errors),
-            ) from err
+            return self.on_validate_error(param_info, request, err)
 
 
 class Form:
@@ -239,6 +268,22 @@ class Form:
     def __init__(self) -> None:
         self.type_initialized = False
         self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
+
+    def on_validate_error(
+        self,
+        param_info: ParamInfo,
+        request: web.Request,
+        err: pydantic.ValidationError,
+    ) -> Any:
+        """Method to handle validation errors."""
+        errors = err.errors(include_url=False)
+        for error in errors:
+            error.pop("input", None)  # type: ignore
+            error["loc"] = ("form",) + error["loc"]
+        raise web.HTTPBadRequest(
+            headers={"Content-Type": "application/json"},
+            text=json.dumps(errors),
+        ) from err
 
     async def __call__(
         self,
@@ -272,14 +317,7 @@ class Form:
         try:
             return self.type_cache.validate_python(form_data)
         except pydantic.ValidationError as err:
-            errors = err.errors(include_url=False)
-            for error in errors:
-                error.pop("input", None)  # type: ignore
-                error["loc"] = ("form",) + error["loc"]
-            raise web.HTTPBadRequest(
-                headers={"Content-Type": "application/json"},
-                text=json.dumps(errors),
-            ) from err
+            return self.on_validate_error(param_info, request, err)
 
 
 class Path:
@@ -303,6 +341,22 @@ class Path:
         self.description = description
         self.type_initialized = False
         self.type_cache: "Union[pydantic.TypeAdapter[Any], None]" = None
+
+    def on_validate_error(
+        self,
+        param_info: ParamInfo,
+        request: web.Request,
+        err: pydantic.ValidationError,
+    ) -> Any:
+        """Method to handle validation errors."""
+        errors = err.errors(include_url=False)
+        for error in errors:
+            error.pop("input", None)  # type: ignore
+            error["loc"] = ("path",) + error["loc"]
+        raise web.HTTPBadRequest(
+            headers={"Content-Type": "application/json"},
+            text=json.dumps(errors),
+        ) from err
 
     def __call__(
         self,
@@ -336,14 +390,7 @@ class Path:
         try:
             return self.type_cache.validate_python(matched_data)
         except pydantic.ValidationError as err:
-            errors = err.errors(include_url=False)
-            for error in errors:
-                error.pop("input", None)  # type: ignore
-                error["loc"] = ("path",) + error["loc"]
-            raise web.HTTPBadRequest(
-                headers={"Content-Type": "application/json"},
-                text=json.dumps(errors),
-            ) from err
+            return self.on_validate_error(param_info, request, err)
 
 
 class ExtraOpenAPI:
@@ -375,6 +422,6 @@ class ExtraOpenAPI:
         """
         This method is called when dependency is resolved.
 
-        It's empty, becuase it's used by the swagger function and
+        It's empty, becuase it's used only by the `setup_swagger` function and
         there is no actual dependency.
         """
