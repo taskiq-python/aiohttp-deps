@@ -288,7 +288,7 @@ def setup_swagger(  # noqa: C901
                         extra_openapi_schemas=route_extra_schemas,
                     )
                 except Exception as exc:  # pragma: no cover
-                    logger.warn(
+                    logger.warning(
                         "Cannot add route info: %s",
                         exc,
                         exc_info=True,
@@ -316,7 +316,7 @@ def setup_swagger(  # noqa: C901
                             extra_openapi_schemas=route_extra_schemas,
                         )
                     except Exception as exc:  # pragma: no cover
-                        logger.warn(
+                        logger.warning(
                             "Cannot add route info: %s",
                             exc,
                             exc_info=True,
