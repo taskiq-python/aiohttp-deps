@@ -93,10 +93,12 @@ class InjectableViewHandler:
             for method in hdrs.METH_ALL
             if hasattr(original_route, method.lower())
         }
-        self.graph_map = {
-            method: DependencyGraph(getattr(original_route, method))
-            for method in allowed_methods
-        }
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", r".*Cannot resolve.*Request.*")
+            self.graph_map = {
+                method: DependencyGraph(getattr(original_route, method))
+                for method in allowed_methods
+            }
 
     async def __call__(self, request: web.Request) -> web.StreamResponse:
         """
