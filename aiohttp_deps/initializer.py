@@ -1,5 +1,6 @@
 import copy
 import inspect
+import warnings
 from typing import Awaitable, Callable, Type
 
 from aiohttp import hdrs, web
@@ -29,7 +30,9 @@ class InjectableFuncHandler:
         original_route: Callable[..., Awaitable[web.StreamResponse]],
     ) -> None:
         self.original_handler = copy.copy(original_route)
-        self.graph = DependencyGraph(self.original_handler)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", r".*Cannot resolve.*Request.*")
+            self.graph = DependencyGraph(self.original_handler)
         signature = inspect.signature(self.original_handler)
         # This flag means that the function requires one argument and
         # doesn't depend on any other dependencies.

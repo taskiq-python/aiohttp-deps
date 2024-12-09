@@ -24,9 +24,9 @@ keywords = ["aiohttp", "taskiq-dependencies"]
 homepage = "https://github.com/taskiq-python/aiohttp-deps"
 
 [tool.poetry.dependencies]
-python = "^3.8.1"
+python = "^3.9"
 aiohttp = ">=3.9.0,<4"
-taskiq-dependencies = ">=1.3.1,<2"
+taskiq-dependencies = ">=1.5.5,<2"
 pydantic = "^2"
 deepmerge = "^2"
 
