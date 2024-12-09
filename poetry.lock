@@ -1239,13 +1239,13 @@ files = [
 
 [[package]]
 name = "taskiq-dependencies"
-version = "1.5.5"
+version = "1.5.6"
 description = "FastAPI like dependency injection implementation"
 optional = false
-python-versions = "<4.0.0,>=3.8.1"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "taskiq_dependencies-1.5.5-py3-none-any.whl", hash = "sha256:a1e2e60251c23ce8318dbeb9a461fb3a951e24140c38a46509e5c5d02cc2eb6f"},
-    {file = "taskiq_dependencies-1.5.5.tar.gz", hash = "sha256:76abcf5e16ddf3e8fb45660406be09d50d2feb416841de7e96efadc53c123429"},
+    {file = "taskiq_dependencies-1.5.6-py3-none-any.whl", hash = "sha256:fba4dbaac47dfc8817fd2efeb13cefe41f45790b4871ba65fcdfd3c74f7121dc"},
+    {file = "taskiq_dependencies-1.5.6.tar.gz", hash = "sha256:5756690fd9f1f9efac34aac5959f173724e898a852de790238f97090467c4e3c"},
 ]
 
 [package.dependencies]
@@ -1433,4 +1433,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "5c46a849df2270f519d2b9e523b64125e3769ef1828fb1952ff2adb34131eeac"
+content-hash = "91650b37b7e154e8ee5339a4e62c10c63bed049aa287acb135ec6737f96afce0"
