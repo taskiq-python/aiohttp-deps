@@ -1,34 +1,43 @@
-[tool.poetry]
+[project]
 name = "aiohttp-deps"
-description = "Dependency injection for AioHTTP"
-authors = ["Taskiq team <taskiq@no-reply.com>"]
-maintainers = ["Taskiq team <taskiq@no-reply.com>"]
 version = "0.0.0"
+description = "Dependency injection for AioHTTP"
 readme = "README.md"
-license = "LICENSE"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Taskiq team", email = "taskiq@no-reply.com" }
+]
+maintainers = [
+    { name = "Taskiq team", email = "taskiq@no-reply.com" }
+]
+keywords = ["aiohttp", "taskiq-dependencies"]
 classifiers = [
     "Typing :: Typed",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Intended Audience :: Developers",
     "Topic :: System :: Networking",
     "Development Status :: 3 - Alpha",
 ]
-keywords = ["aiohttp", "taskiq-dependencies"]
-homepage = "https://github.com/taskiq-python/aiohttp-deps"
+requires-python = ">=3.9,<4.0"
+dependencies = [
+    "aiohttp>=3.9.0,<4",
+    "taskiq-dependencies>=1.5.6,<2",
+    "pydantic>=2,<3",
+    "deepmerge>=2,<3",
+]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-aiohttp = ">=3.9.0,<4"
-taskiq-dependencies = ">=1.5.6,<2"
-pydantic = "^2"
-deepmerge = "^2"
+[project.urls]
+Homepage = "https://github.com/taskiq-python/aiohttp-deps"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8"
