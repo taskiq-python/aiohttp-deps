@@ -12,7 +12,7 @@ class View(web.View):
     Custom View.
 
     If you're going to use dependency injection
-    in handlers, please subclass this View instad of
+    in handlers, please subclass this View instead of
     the default View from AioHTTP.
     """
 

@@ -422,6 +422,6 @@ class ExtraOpenAPI:
         """
         This method is called when dependency is resolved.
 
-        It's empty, becuase it's used only by the `setup_swagger` function and
+        It's empty, because it's used only by the `setup_swagger` function and
         there is no actual dependency.
         """

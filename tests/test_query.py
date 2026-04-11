@@ -25,7 +25,7 @@ async def test_query_dependency(
 
 
 @pytest.mark.anyio
-async def test_empty_querys(
+async def test_empty_queries(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
 ) -> None:
@@ -40,7 +40,7 @@ async def test_empty_querys(
 
 
 @pytest.mark.anyio
-async def test_nullable_querys(
+async def test_nullable_queries(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
 ) -> None:
@@ -107,11 +107,11 @@ async def test_multiple(
 
     client = await aiohttp_client(my_app)
 
-    querys = CIMultiDict()
-    querys.extend({"my_query": "123"})
-    querys.extend({"my_query": "321"})
+    queries = CIMultiDict()
+    queries.extend({"my_query": "123"})
+    queries.extend({"my_query": "321"})
 
-    resp = await client.get("/", params=querys)
+    resp = await client.get("/", params=queries)
     assert resp.status == 200
     assert (await resp.json())["query"] == [123, 321]
 
