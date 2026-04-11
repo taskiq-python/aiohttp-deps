@@ -25,7 +25,7 @@ from aiohttp_deps.utils import ExtraOpenAPI, Form, Header, Json, Path, Query
 _T = TypeVar("_T")
 
 REF_TEMPLATE = "#/components/schemas/{model}"
-SWAGGER_HTML_TEMPALTE = """
+SWAGGER_HTML_TEMPLATE = """
 <html lang="en">
 
 <head>
@@ -333,7 +333,7 @@ def setup_swagger(  # noqa: C901
             app.router.add_get(
                 swagger_ui_url,
                 _get_swagger_handler(
-                    SWAGGER_HTML_TEMPALTE.replace("{schema_url}", schema_url),
+                    SWAGGER_HTML_TEMPLATE.replace("{schema_url}", schema_url),
                 ),
             )
 

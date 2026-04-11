@@ -1,127 +1,133 @@
 [project]
 name = "aiohttp-deps"
-version = "0.0.0"
 description = "Dependency injection for AioHTTP"
 readme = "README.md"
+requires-python = ">=3.10,<4.0"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [
-    { name = "Taskiq team", email = "taskiq@no-reply.com" }
+authors = [{ name = "Taskiq team", email = "taskiq@no-reply.com" }]
+maintainers = [{ name = "Taskiq team", email = "taskiq@no-reply.com" }]
+keywords = [
+  "aiohttp",
+  "taskiq-dependencies",
 ]
-maintainers = [
-    { name = "Taskiq team", email = "taskiq@no-reply.com" }
-]
-keywords = ["aiohttp", "taskiq-dependencies"]
 classifiers = [
-    "Typing :: Typed",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Operating System :: OS Independent",
-    "Intended Audience :: Developers",
-    "Topic :: System :: Networking",
-    "Development Status :: 3 - Alpha",
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: System :: Networking",
+  "Typing :: Typed",
 ]
-requires-python = ">=3.9,<4.0"
 dependencies = [
-    "aiohttp>=3.9.0,<4",
-    "taskiq-dependencies>=1.5.6,<2",
-    "pydantic>=2,<3",
-    "deepmerge>=2,<3",
+  "aiohttp>=3.9.0,<4",
+  "deepmerge>=2,<3",
+  "pydantic>=2,<3",
+  "taskiq-dependencies>=1.5.6,<2",
 ]
+dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://github.com/taskiq-python/aiohttp-deps"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8"
-mypy = "^1"
-pre-commit = "^3"
-coverage = "^7"
-pytest-cov = "^5.0.0"
-mock = "^5"
-anyio = "^4"
-pytest-xdist = { version = "^3", extras = ["psutil"] }
-types-mock = "^5"
-black = "^24"
-ruff = "^0.6"
+[dependency-groups]
+dev = [
+  "anyio>=4,<5",
+  "black>=24,<25",
+  "coverage>=7,<8",
+  "mock>=5,<6",
+  "mypy>=1,<2",
+  "pre-commit>=3,<4",
+  "pytest>=8,<9",
+  "pytest-cov>=5.0.0,<6",
+  "pytest-xdist[psutil]>=3,<4",
+  "ruff>=0.6,<0.7",
+  "types-mock>=5,<6",
+]
 
-[tool.mypy]
-strict = true
-ignore_missing_imports = true
-pretty = true
-show_error_codes = true
-implicit_reexport = true
-warn_return_any = false
-warn_unused_ignores = false
+[build-system]
+requires = ["hatchling", "versioningit"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "versioningit"
 
 [tool.isort]
 profile = "black"
 multi_line_output = 3
 
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+pretty = true
+implicit_reexport = true
+warn_return_any = false
+warn_unused_ignores = false
+
 [tool.ruff]
 # List of enabled rulsets.
 # See https://docs.astral.sh/ruff/rules/ for more information.
 lint.select = [
-    "E",   # Error
-    "F",   # Pyflakes
-    "W",   # Pycodestyle
-    "C90", # McCabe complexity
-    "I",   # Isort
-    "N",   # pep8-naming
-    "D",   # Pydocstyle
-    "ANN", # Pytype annotations
-    "S",   # Bandit
-    "B",   # Bugbear
-    "COM", # Commas
-    "C4",  # Comprehensions
-    "ISC", # Implicit string concat
-    "PIE", # Unnecessary code
-    "T20", # Catch prints
-    "PYI", # validate pyi files
-    "Q",   # Checks for quotes
-    "RSE", # Checks raise statements
-    "RET", # Checks return statements
-    "SLF", # Self checks
-    "SIM", # Simplificator
-    "PTH", # Pathlib checks
-    "ERA", # Checks for commented out code
-    "PL",  # PyLint checks
-    "RUF", # Specific to Ruff checks
+  "E",  # Error
+  "F",  # Pyflakes
+  "W",  # Pycodestyle
+  "C90",  # McCabe complexity
+  "I",  # Isort
+  "N",  # pep8-naming
+  "D",  # Pydocstyle
+  "ANN",  # Pytype annotations
+  "S",  # Bandit
+  "B",  # Bugbear
+  "COM",  # Commas
+  "C4",  # Comprehensions
+  "ISC",  # Implicit string concat
+  "PIE",  # Unnecessary code
+  "T20",  # Catch prints
+  "PYI",  # validate pyi files
+  "Q",  # Checks for quotes
+  "RSE",  # Checks raise statements
+  "RET",  # Checks return statements
+  "SLF",  # Self checks
+  "SIM",  # Simplificator
+  "PTH",  # Pathlib checks
+  "ERA",  # Checks for commented out code
+  "PL",  # PyLint checks
+  "RUF",  # Specific to Ruff checks
 ]
 lint.ignore = [
-    "D105",    # Missing docstring in magic method
-    "D107",    # Missing docstring in __init__
-    "D212",    # Multi-line docstring summary should start at the first line
-    "D401",    # First line should be in imperative mood
-    "D104",    # Missing docstring in public package
-    "D100",    # Missing docstring in public module
-    "ANN102",  # Missing type annotation for self in method
-    "ANN101",  # Missing type annotation for argument
-    "ANN401",  # typing.Any are disallowed in `**kwargs
-    "PLR0913", # Too many arguments for function call
-    "D106",    # Missing docstring in public nested class
-    "SLF001",  # Private member accessed
-
+  "D105",  # Missing docstring in magic method
+  "D107",  # Missing docstring in __init__
+  "D212",  # Multi-line docstring summary should start at the first line
+  "D401",  # First line should be in imperative mood
+  "D104",  # Missing docstring in public package
+  "D100",  # Missing docstring in public module
+  "ANN102",  # Missing type annotation for self in method
+  "ANN101",  # Missing type annotation for argument
+  "ANN401",  # typing.Any are disallowed in `**kwargs
+  "PLR0913",  # Too many arguments for function call
+  "D106",  # Missing docstring in public nested class
+  "SLF001",  # Private member accessed
 ]
-exclude = [".venv/"]
 lint.mccabe = { max-complexity = 10 }
+exclude = [".venv/"]
 line-length = 88
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = [
-    "S101",   # Use of assert detected
-    "S301",   # Use of pickle detected
-    "D103",   # Missing docstring in public function
-    "SLF001", # Private member accessed
-    "S311",   # Standard pseudo-random generators are not suitable for security/cryptographic purposes
-    "D101",   # Missing docstring in public class
+  "S101",  # Use of assert detected
+  "S301",  # Use of pickle detected
+  "D103",  # Missing docstring in public function
+  "SLF001",  # Private member accessed
+  "S311",  # Standard pseudo-random generators are not suitable for security/cryptographic purposes
+  "D101",  # Missing docstring in public class
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -133,15 +139,11 @@ allow-magic-value-types = ["int", "str", "float"]
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = [
-    "taskiq_dependencies.Depends",
-    "aiohttp_deps.Depends",
-    "aiohttp_deps.Query",
-    "aiohttp_deps.Header",
-    "aiohttp_deps.Json",
-    "aiohttp_deps.Form",
-    "aiohttp_deps.Path",
+  "taskiq_dependencies.Depends",
+  "aiohttp_deps.Depends",
+  "aiohttp_deps.Query",
+  "aiohttp_deps.Header",
+  "aiohttp_deps.Json",
+  "aiohttp_deps.Form",
+  "aiohttp_deps.Path",
 ]
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"

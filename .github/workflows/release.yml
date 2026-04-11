@@ -8,19 +8,30 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: release
+    permissions:
+      id-token: write
+    env:
+      UV_SYSTEM_PYTHON: 1
     steps:
-      - uses: actions/checkout@v2
-      - name: Install poetry
-        run: pipx install poetry
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v5
         with:
-          python-version: "3.11"
-      - name: Install deps
-        run: poetry install
-      - name: Set version
-        run: poetry version "${{ github.ref_name }}"
+          persist-credentials: false
+      - name: Setup python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - id: setup-uv
+        name: Setup UV
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-suffix: '3.14'
+          github-token: ${{ github.token }}
+          version: "3.14"
+      - run: uv build
       - name: Release package
         env:
-          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
-        run: poetry publish --build
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: uv publish

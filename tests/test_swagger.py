@@ -282,7 +282,7 @@ async def test_query_aliased(
 
 @pytest.mark.anyio
 @pytest.mark.parametrize(
-    ["dependecy", "param_info"],
+    ["dependency", "param_info"],
     (
         (
             Query(),
@@ -382,13 +382,13 @@ async def test_query_aliased(
 async def test_parameters(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-    dependecy: Any,
+    dependency: Any,
     param_info: Dict[str, Any],
 ) -> None:
     openapi_url = "/my_api_def.json"
     my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
-    async def my_handler(my_var: int = Depends(dependecy)) -> None:
+    async def my_handler(my_var: int = Depends(dependency)) -> None:
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)
@@ -403,7 +403,7 @@ async def test_parameters(
 
 @pytest.mark.anyio
 @pytest.mark.parametrize(
-    ["dependecy", "param_info"],
+    ["dependency", "param_info"],
     (
         (
             Query(),
@@ -441,13 +441,13 @@ async def test_parameters(
 async def test_parameters_untyped(
     my_app: web.Application,
     aiohttp_client: ClientGenerator,
-    dependecy: Any,
+    dependency: Any,
     param_info: Dict[str, Any],
 ) -> None:
     openapi_url = "/my_api_def.json"
     my_app.on_startup.append(setup_swagger(schema_url=openapi_url))
 
-    async def my_handler(my_var=Depends(dependecy)) -> None:  # noqa: ANN001
+    async def my_handler(my_var=Depends(dependency)) -> None:  # noqa: ANN001
         """Nothing."""
 
     my_app.router.add_get("/a", my_handler)

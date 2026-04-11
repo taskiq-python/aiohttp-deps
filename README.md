@@ -5,7 +5,7 @@
 # AioHTTP deps
 
 
-This project was initially created to show the abillities of [taskiq-dependencies](https://github.com/taskiq-python/taskiq-dependencies) project, which is used by [taskiq](https://github.com/taskiq-python/taskiq) to provide you with the best experience of sending distributed tasks.
+This project was initially created to show the abilities of [taskiq-dependencies](https://github.com/taskiq-python/taskiq-dependencies) project, which is used by [taskiq](https://github.com/taskiq-python/taskiq) to provide you with the best experience of sending distributed tasks.
 
 This project adds [FastAPI](https://github.com/tiangolo/fastapi)-like dependency injection to your [AioHTTP](https://github.com/aio-libs/aiohttp) application and swagger documentation based on types.
 
@@ -26,7 +26,7 @@ web.run_app(app)
 ```
 
 
-If you use mypy, then we have a custom router with propper types.
+If you use mypy, then we have a custom router with proper types.
 
 
 ```python
@@ -123,7 +123,7 @@ async def handler() -> web.Response:
 
 This example illustrates how much you can do with this decorator. You
 can have multiple content-types for a single status, or you can have different
-possble statuses. This function is pretty simple and if you want to make
+possible statuses. This function is pretty simple and if you want to make
 your own decorator for your responses, it won't be hard.
 
 
@@ -289,7 +289,7 @@ async def shop(item_id: str = Depends(Query())) -> web.Response:
 
 the name of the parameter is the same as the name of function parameter.
 
-The Query dependency is acually the same as the Header dependency, so everything about the `Header` dependency also applies to `Query`.
+The Query dependency is actually the same as the Header dependency, so everything about the `Header` dependency also applies to `Query`.
 
 ## Views
 
@@ -312,7 +312,7 @@ class MyView(View):
 
 ## Forms
 
-Now you can easiy get and validate form data from your request.
+Now you can easily get and validate form data from your request.
 To make the magic happen, please add `arbitrary_types_allowed` to the config of your model.
 
 
@@ -370,7 +370,7 @@ You can check how this thing can be used in our [examples/swagger_auth.py](https
 Sometimes for tests you don't want to calculate actual functions
 and you want to pass another functions instead.
 
-To do so, you can add "dependency_overrides" or "values_overrides" to the aplication's state.
+To do so, you can add "dependency_overrides" or "values_overrides" to the application's state.
 These values should be dicts. The keys for these values can be found in `aiohttp_deps.keys` module.
 
 Here's an example.
@@ -388,7 +388,7 @@ class MyView(View):
 Imagine you have a handler that depends on some function,
 but instead of `1` you want to have `2` in your tests.
 
-To do it, jsut add `dependency_overrides` somewhere,
+To do it, just add `dependency_overrides` somewhere,
 where you create your application. And make sure that keys
 of that dict are actual function that are being replaced.
 

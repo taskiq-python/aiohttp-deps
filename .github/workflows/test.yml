@@ -1,57 +1,67 @@
 name: Testing package
 
-on: push
+on:
+  pull_request:
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
 
 jobs:
   lint:
     strategy:
       matrix:
-        cmd:
-          - black
-          - mypy
-          - ruff
+        cmd: ["black", "ruff", "mypy"]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Install poetry
-        run: pipx install poetry
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v5
         with:
-          python-version: "3.11"
-          cache: "poetry"
+          persist-credentials: false
+      - id: setup-uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-suffix: 3.11
+          version: "latest"
+          python-version: 3.11
       - name: Install deps
-        run: poetry install
+        run: uv sync --all-extras
       - name: Run lint check
-        run: poetry run pre-commit run -a ${{ matrix.cmd }}
+        run: uv run pre-commit run -a ${{ matrix.cmd }}
   pytest:
-    permissions:
-      checks: write
-      pull-requests: write
-      contents: write
     strategy:
       matrix:
-        py_version: ["3.9", "3.10", "3.11", "3.12"]
+        py_version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: "ubuntu-latest"
+    env:
+      UV_SYSTEM_PYTHON: 1
     steps:
-      - uses: actions/checkout@v2
-      - name: Install poetry
-        run: pipx install poetry
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Setup python
+        uses: actions/setup-python@v6
         with:
           python-version: "${{ matrix.py_version }}"
-          cache: "poetry"
-      - name: Install deps
-        run: poetry install
-      - name: Run pytest check
-        run: poetry run pytest -vv -n auto --cov="aiohttp_deps" .
-      - name: Generate report
-        run: poetry run coverage xml
-      - name: Upload coverage reports to Codecov with GitHub Action
-        uses: codecov/codecov-action@v3
-        if: matrix.py_version == '3.9'
+      - id: setup-uv
+        name: Setup UV
+        uses: astral-sh/setup-uv@v7
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          enable-cache: true
+          cache-suffix: ${{ matrix.py_version }}
+          github-token: ${{ github.token }}
+          version: "latest"
+      - name: Install deps
+        run: uv sync --all-extras --locked
+      - name: Run pytest check
+        run: uv run pytest -vv -n auto --cov="aiohttp_deps" .
+      - name: Generate report
+        run: uv run coverage xml
+      - name: Upload coverage reports to Codecov with GitHub Action
+        uses: codecov/codecov-action@v5
+        if: matrix.os == 'ubuntu-latest' && matrix.py_version == '3.10'
+        with:
           fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
