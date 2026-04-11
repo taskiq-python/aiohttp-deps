@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+          fetch-tags: true
       - id: setup-uv
         uses: astral-sh/setup-uv@v7
         with:
@@ -40,6 +41,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+          fetch-tags: true
       - name: Setup python
         uses: actions/setup-python@v6
         with:
